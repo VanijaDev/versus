@@ -21,11 +21,11 @@ contract VersusVoting is Ownable {
   struct EpochResult {
     uint8 poolIdWinner;
     uint256 loserPoolChunk;
-    uint256 poolWinnerVoterRefundPercentage;  //  95%
+    uint256 poolWinnerVoterRefundPercentage;
   }
 
-  uint256 public poolLoserWinnersDistributionPercentage;  //  70%, balance percentage to be distributed among voters in winner pool. Remainder gets to next epoch.
-  uint256 public poolWinnerVoterRefundPercentage;         //  95%, balance percentage to be refunded to voters. Remainder is dev fee.
+  uint256 public poolLoserWinnersDistributionPercentage;  //  balance percentage to be distributed among voters in winner pool. Remainder gets to next epoch.
+  uint256 public poolWinnerVoterRefundPercentage;         //  balance percentage to be refunded to voters. Remainder is dev fee.
 
   uint256 public currentEpoch;
   uint256 public currentEpochStartedAt;
@@ -207,14 +207,12 @@ contract VersusVoting is Ownable {
   function performCalculationsForPoolLoser(PoolId _loserId, PoolId _winnerId) private {
     uint256 balance = balanceForPool[currentEpoch][_loserId];
 
-    //  70%
     uint256 winnersDistribution = ((balance * poolLoserWinnersDistributionPercentage) / 100);
     uint256 winners = votersForPool[currentEpoch][_winnerId].length;
     uint256 winnerChunk = winnersDistribution / winners;
 
     epochResult[currentEpoch] = EpochResult(uint8(_winnerId), winnerChunk, poolWinnerVoterRefundPercentage);
 
-    //  30%
     uint256 singlePoolAmount = (balance - (winnerChunk * winners)) / 2;
     balanceForPool[currentEpoch + 1][PoolId.one] = singlePoolAmount;
     balanceForPool[currentEpoch + 1][PoolId.two] = singlePoolAmount;
@@ -227,7 +225,6 @@ contract VersusVoting is Ownable {
   function performCalculationsForPoolWinner(PoolId _winnerId) private {
     uint256 balance = balanceForPool[currentEpoch][_winnerId];
     
-    //  5% 
     uint256 devFee = (balance * (100 - poolWinnerVoterRefundPercentage)) / 100;
     devFeeReceiver.transfer(devFee);
     emit DevFeeTransferred(devFeeReceiver, devFee);
@@ -238,18 +235,6 @@ contract VersusVoting is Ownable {
     * @param _loopLimit Limit for epoch looping.
     * @return amount Reward amount.
     * @return updatedStartEpoch Updated epoch to start following calculations.
-
-    struct Stake {
-      PoolId poolId;
-      uint256 amount;
-    }
-
-    struct EpochResult {
-      uint8 poolIdWinner;
-      uint256 loserPoolChunk;
-      uint256 poolWinnerVoterRefundPercentage;  //  95%
-    }
-  
    */
   function calculatePendingWithdrawalReward(uint256 _loopLimit) public view returns (uint256 amount, uint256 updatedStartEpoch) {
     uint256 startId = pendingEpochToStartCalculationsForVoter[msg.sender];
