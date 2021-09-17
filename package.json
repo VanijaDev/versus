@@ -1,0 +1,22 @@
+{
+  "name": "versus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VanijaDev/versus.git"
+  },
+  "author": "Ivan Solomichev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VanijaDev/versus/issues"
+  },
+  "homepage": "https://github.com/VanijaDev/versus#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "4.3.1"
+  }
+}
