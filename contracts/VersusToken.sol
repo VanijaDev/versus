@@ -5,6 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract VersusToken is ERC20("VERSUS", "VERSUS") {
   constructor() {
-    _mint(msg.sender, 2000000*(10**decimals()));
+    _mint(msg.sender, 2000000*(10**18));
   }
 }
