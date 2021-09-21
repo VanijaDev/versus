@@ -6,19 +6,19 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract VersusVoting is Ownable {
 
-  enum PoolId {
+  enum Pool {
     none,
     one,
     two
   }
 
-  struct Stake {
-    PoolId poolId;
-    uint256 amount;
+  struct Vote {
+    Pool pool;
+    uint256 stake;
   }
 
   struct EpochResult {
-    uint8 poolIdWinner;
+    uint8 poolWinner;
     uint256 loserPoolChunk;
     uint256 poolWinnerVoterRefundPercentage;  //  95%
   }
@@ -33,14 +33,16 @@ contract VersusVoting is Ownable {
   uint256 public currentEpochStartedAt;
   uint256 public epochDuration;
   uint256 public minStake;
+  uint256 public versusBonus;
 
+  mapping(address => uint256) public pendingVersusBonusForVoter;                //  (voter => amount)
   mapping(uint256 => EpochResult) public epochResult;                           //  (epoch => EpochResult)
   mapping(address => uint256) public pendingEpochToStartCalculationsForVoter;   //  (voter => epoch), epoch index to start with for pending reward calculations
-  mapping(uint256 => mapping(address => Stake)) private stakeForVoter;          //  (epoch => (voter => Stake))
-  mapping(uint256 => mapping(PoolId => uint256)) private balanceForPool;        //  (epoch => (poolId => balance))
-  mapping(uint256 => mapping(PoolId => address[])) private votersForPool;       //  (epoch => (poolId => voters[]))
+  mapping(uint256 => mapping(address => Vote)) private voteForVoter;            //  (epoch => (voter => Vote))
+  mapping(uint256 => mapping(Pool => uint256)) private balanceForPool;          //  (epoch => (pool => balance))
+  mapping(uint256 => mapping(Pool => address[])) private votersForPool;         //  (epoch => (pool => voters[]))
 
-  event Vote(uint8 poolId, address voter, uint256 amount);
+  event Voted(uint8 pool, address voter, uint256 amount);
   event EpochFinished(uint256 epoch);
   event DevFeeTransferred(address to, uint256 amount);
 
@@ -49,8 +51,8 @@ contract VersusVoting is Ownable {
     _;
   }
 
-  modifier onlyValidPool(PoolId _poolId) {
-    require(_poolId == PoolId.one || _poolId == PoolId.two, "Wrong poolId");
+  modifier onlyValidPool(Pool _pool) {
+    require(_pool == Pool.one || _pool == Pool.two, "Wrong pool");
     _;
   }
 
@@ -60,6 +62,7 @@ contract VersusVoting is Ownable {
     * @param _versusToken VersusToken address.
    */
   constructor(address _devFeeReceiver, address _versusToken) {
+    versusBonus = 10**18;
     minStake = 10**17;  //  0.1 BNB
     epochDuration = 3 hours;
     poolLoserWinnersDistributionPercentage = 70;
@@ -113,6 +116,15 @@ contract VersusVoting is Ownable {
   }
 
   /**
+   * @dev Updates Versus token bonus amount.
+   * @param _amount Versus amount.
+   */
+  function updateVersusBonus(uint256 _amount) external onlyOwner {
+    require(_amount > 0, "Wrong _amount");
+    versusBonus = _amount;
+  }
+
+  /**
    * @dev Updates min stake amount.
    * @param _minStake Min stake amount.
    */
@@ -124,66 +136,67 @@ contract VersusVoting is Ownable {
   /**
    * @dev Gets balance for the pool.
    * @param _epoch Epoch id.
-   * @param _poolId PoolId.
+   * @param _pool Pool.
    * @return Balance for pool.
    */
-  function getBalanceForPool(uint256 _epoch, PoolId _poolId) external view onlyValidEpoch(_epoch) onlyValidPool(_poolId) returns (uint256) {
-    return balanceForPool[_epoch][_poolId];
+  function getBalanceForPool(uint256 _epoch, Pool _pool) external view onlyValidEpoch(_epoch) onlyValidPool(_pool) returns (uint256) {
+    return balanceForPool[_epoch][_pool];
   }
 
   /**
-   * @dev Gets stake for the voter.
+   * @dev Gets Vote for the voter.
    * @param _epoch Epoch id.
    * @param _address Voter address.
-   * @return Stake struct.
+   * @return Vote struct.
    */
-  function getStakeForVoter(uint256 _epoch, address _address) external view onlyValidEpoch(_epoch) returns (Stake memory) {
-    return stakeForVoter[_epoch][_address];
+  function getVoteForVoter(uint256 _epoch, address _address) external view onlyValidEpoch(_epoch) returns (Vote memory) {
+    return voteForVoter[_epoch][_address];
   }
 
   /**
    * @dev Gets voters for the pool.
    * @param _epoch Epoch id.
-   * @param _poolId PoolId.
+   * @param _pool Pool.
    * @return Voters for pool.
    */
-  function getVotersForPool(uint256 _epoch, PoolId _poolId) public view onlyValidEpoch(_epoch) onlyValidPool(_poolId) returns (address[] memory) {
-    return votersForPool[_epoch][_poolId];
+  function getVotersForPool(uint256 _epoch, Pool _pool) public view onlyValidEpoch(_epoch) onlyValidPool(_pool) returns (address[] memory) {
+    return votersForPool[_epoch][_pool];
   }
 
   /**
    * @dev Gets voter count for the pool.
    * @param _epoch Epoch id.
-   * @param _poolId PoolId.
+   * @param _pool Pool.
    * @return Voters for pool.
    */
-  function getVoterCountForPool(uint256 _epoch, PoolId _poolId) public view returns (uint256) {
-    return getVotersForPool(_epoch, _poolId).length;
+  function getVoterCountForPool(uint256 _epoch, Pool _pool) public view returns (uint256) {
+    return getVotersForPool(_epoch, _pool).length;
   }
 
   /**
-   * @dev Makes Stake to the pool.
-   * @param _poolId PoolId.
+   * @dev Makes vote for the pool.
+   * @param _pool Pool.
    */
-  function vote(PoolId _poolId) external payable onlyValidPool(_poolId) {
+  function makeVote(Pool _pool) external payable onlyValidPool(_pool) {
     require(msg.value >= minStake, "Wrong amount");
     require(block.timestamp < currentEpochStartedAt + epochDuration, "Epoch finished");
 
-    Stake storage stake = stakeForVoter[currentEpoch][msg.sender];
-    if (stake.poolId == PoolId.none) {
-      stake.poolId = _poolId;
-      votersForPool[currentEpoch][_poolId].push(msg.sender);
+    Vote storage vote = voteForVoter[currentEpoch][msg.sender];
+    if (vote.pool == Pool.none) {
+      vote.pool = _pool;
+      votersForPool[currentEpoch][_pool].push(msg.sender);
     } else {
-      require(stake.poolId == _poolId, "Wrong _poolId");
+      require(vote.pool == _pool, "Wrong _pool");
     }
 
-    stake.amount += msg.value;
-    balanceForPool[currentEpoch][_poolId] += msg.value;
+    //  stake
+    vote.stake += msg.value;
+    balanceForPool[currentEpoch][_pool] += msg.value;
 
     //  token bonus
-    IERC20(versusToken).transferFrom(owner(), msg.sender, (10**18));
+    pendingVersusBonusForVoter[msg.sender] += versusBonus;
 
-    emit Vote(uint8(_poolId), msg.sender, msg.value);
+    emit Voted(uint8(_pool), msg.sender, msg.value);
   }
 
   /**
@@ -192,12 +205,12 @@ contract VersusVoting is Ownable {
   function finishEpoch() external onlyOwner {
     require(block.timestamp >= currentEpochStartedAt + epochDuration, "Still running");
 
-    if (balanceForPool[currentEpoch][PoolId.one] > balanceForPool[currentEpoch][PoolId.two]) {
-      performCalculationsForPoolLoser(PoolId.two, PoolId.one);
-      performCalculationsForPoolWinner(PoolId.one);
-    } else if (balanceForPool[currentEpoch][PoolId.one] < balanceForPool[currentEpoch][PoolId.two]) {
-      performCalculationsForPoolLoser(PoolId.one, PoolId.two);
-      performCalculationsForPoolWinner(PoolId.two);
+    if (balanceForPool[currentEpoch][Pool.one] > balanceForPool[currentEpoch][Pool.two]) {
+      performCalculationsForPoolLoser(Pool.two, Pool.one);
+      performCalculationsForPoolWinner(Pool.one);
+    } else if (balanceForPool[currentEpoch][Pool.one] < balanceForPool[currentEpoch][Pool.two]) {
+      performCalculationsForPoolLoser(Pool.one, Pool.two);
+      performCalculationsForPoolWinner(Pool.two);
     }
 
     emit EpochFinished(currentEpoch);
@@ -208,38 +221,38 @@ contract VersusVoting is Ownable {
 
   /**
     * @dev Performs calculations for pool loser.
-    * @param _loserId PoolId that lost.
-    * @param _winnerId PoolId that won.
+    * @param _loserId Pool that lost.
+    * @param _winnerId Pool that won.
    */
-  function performCalculationsForPoolLoser(PoolId _loserId, PoolId _winnerId) private {
-    uint256 balance = balanceForPool[currentEpoch][_loserId];
-    if (balance == 0) {
+  function performCalculationsForPoolLoser(Pool _loserId, Pool _winnerId) private {
+    uint256 balanceLoser = balanceForPool[currentEpoch][_loserId];
+    if (balanceLoser == 0) {
       epochResult[currentEpoch] = EpochResult(uint8(_winnerId), 0, poolWinnerVoterRefundPercentage);
       return;
     }
 
     //  70%
-    uint256 winnersDistribution = ((balance * poolLoserWinnersDistributionPercentage) / 100);
+    uint256 winnersDistribution = ((balanceLoser * poolLoserWinnersDistributionPercentage) / 100);
     uint256 winners = votersForPool[currentEpoch][_winnerId].length;
     uint256 winnerChunk = winnersDistribution / winners;
 
     epochResult[currentEpoch] = EpochResult(uint8(_winnerId), winnerChunk, poolWinnerVoterRefundPercentage);
 
     //  30%
-    uint256 singlePoolAmount = (balance - (winnerChunk * winners)) / 2;
-    balanceForPool[currentEpoch + 1][PoolId.one] = singlePoolAmount;
-    balanceForPool[currentEpoch + 1][PoolId.two] = singlePoolAmount;
+    uint256 singlePoolAmount = (balanceLoser - (winnerChunk * winners)) / 2;
+    balanceForPool[currentEpoch + 1][Pool.one] = singlePoolAmount;
+    balanceForPool[currentEpoch + 1][Pool.two] = singlePoolAmount;
   }
 
   /**
     * @dev Performs calculations for pool winner.
-    * @param _winnerId PoolId that won.
+    * @param _winnerId Pool that won.
    */
-  function performCalculationsForPoolWinner(PoolId _winnerId) private {
-    uint256 balance = balanceForPool[currentEpoch][_winnerId];
+  function performCalculationsForPoolWinner(Pool _winnerId) private {
+    uint256 balanceWinner = balanceForPool[currentEpoch][_winnerId];
     
     //  5% 
-    uint256 devFee = (balance * (100 - poolWinnerVoterRefundPercentage)) / 100;
+    uint256 devFee = (balanceWinner * (100 - poolWinnerVoterRefundPercentage)) / 100;
     devFeeReceiver.transfer(devFee);
     emit DevFeeTransferred(devFeeReceiver, devFee);
   }
@@ -258,15 +271,15 @@ contract VersusVoting is Ownable {
     updatedStartEpoch = stopId + 1;
 
     for (uint256 epoch = startId; epoch <= stopId; epoch ++) {
-      Stake storage stake = stakeForVoter[epoch][msg.sender];
+      Vote storage vote = voteForVoter[epoch][msg.sender];
       EpochResult storage result = epochResult[epoch];
 
-      if (stake.poolId == PoolId(result.poolIdWinner)) {
-        amount += (stake.amount * result.poolWinnerVoterRefundPercentage) / 100;
+      if (vote.pool == Pool(result.poolWinner)) {
+        amount += (vote.stake * result.poolWinnerVoterRefundPercentage) / 100;
         amount += result.loserPoolChunk;
-      } else if (PoolId(result.poolIdWinner) == PoolId.none) {
-        if (stake.amount > 0) {
-          amount += stake.amount;
+      } else if (Pool(result.poolWinner) == Pool.none) {
+        if (vote.stake > 0) {
+          amount += vote.stake;
         }
       }
     }
@@ -277,11 +290,20 @@ contract VersusVoting is Ownable {
     * @param _loopLimit Limit for epoch looping.
    */
   function withdrawPendingReward(uint256 _loopLimit) external {
+    uint256 versusBonusTmp = pendingVersusBonusForVoter[msg.sender];
+    if (versusBonusTmp > 0) {
+      delete pendingVersusBonusForVoter[msg.sender];
+      IERC20(versusToken).transferFrom(owner(), msg.sender, versusBonusTmp);
+    }
+
     (uint256 amount, uint256 updatedStartEpoch) = calculatePendingWithdrawalReward(_loopLimit);
-    require(amount > 0, "No reward");
+    if (amount > 0) {
+      pendingEpochToStartCalculationsForVoter[msg.sender] = updatedStartEpoch;
+      (payable(msg.sender)).transfer(amount);
+    }
 
-    pendingEpochToStartCalculationsForVoter[msg.sender] = updatedStartEpoch;
-
-    (payable(msg.sender)).transfer(amount);
+    if (versusBonusTmp == 0 && amount == 0) {
+      revert("No reward");
+    }
   }
 }
