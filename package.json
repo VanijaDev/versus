@@ -17,8 +17,7 @@
   },
   "homepage": "https://github.com/VanijaDev/versus#readme",
   "devDependencies": {
-    "@openzeppelin/test-helpers": "0.5.13",
-    "chai": "4.3.4"
+    "@openzeppelin/test-helpers": "0.5.15"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.3.2"

@@ -10,9 +10,6 @@ const {
   expectRevert,
   time,
 } = require('@openzeppelin/test-helpers');
-const {
-  expect, assert
-} = require('chai');
 
 contract("Voting Smart Contract", function (accounts) {
   const OWNER = accounts[0];
@@ -45,12 +42,12 @@ contract("Voting Smart Contract", function (accounts) {
       assert.equal(0, (await votingContract.epochDuration.call()).cmp(time.duration.hours(3)), "wrong epochDuration");
     });
     
-    it("should set correct poolLoserWinnersDistributionPercentage", async function () {
-      assert.equal(0, (await votingContract.poolLoserWinnersDistributionPercentage.call()).cmp(new BN("70")), "wrong amount");
+    it("should set correct poolLoserBalanceToNextEpochPercentage", async function () {
+      assert.equal(0, (await votingContract.poolLoserBalanceToNextEpochPercentage.call()).cmp(new BN("30")), "wrong amount");
     });
     
-    it("should set correct poolWinnerVoterRefundPercentage", async function () {
-      assert.equal(0, (await votingContract.poolWinnerVoterRefundPercentage.call()).cmp(new BN("95")), "wrong amount");
+    it("should set correct devFeePercentage", async function () {
+      assert.equal(0, (await votingContract.devFeePercentage.call()).cmp(new BN("5")), "wrong amount");
     });
     
     it("should set correct versusToken", async function () {
@@ -106,47 +103,47 @@ contract("Voting Smart Contract", function (accounts) {
     });
   });
 
-  describe("updatePoolLoserWinnersDistributionPercentage", function () {
+  describe("updatePoolLoserBalanceToNextEpochPercentage", function () {
     it("should fail if not owner", async function () {
-      await expectRevert(votingContract.updatePoolLoserWinnersDistributionPercentage(11, {
+      await expectRevert(votingContract.updatePoolLoserBalanceToNextEpochPercentage(11, {
         from: OTHER
       }), "Ownable: caller is not the owner");
     });
 
     it("should fail if _percentage == 0", async function () {
-      await expectRevert(votingContract.updatePoolLoserWinnersDistributionPercentage(0), "Wrong _percentage");
+      await expectRevert(votingContract.updatePoolLoserBalanceToNextEpochPercentage(0), "Wrong _percentage");
     });
 
     it("should fail if _percentage > 100", async function () {
-      await expectRevert(votingContract.updatePoolLoserWinnersDistributionPercentage(111), "Wrong _percentage");
+      await expectRevert(votingContract.updatePoolLoserBalanceToNextEpochPercentage(111), "Wrong _percentage");
     });
     
     it("should set correct value", async function () {
-      assert.equal(0, (await votingContract.poolLoserWinnersDistributionPercentage.call()).cmp(new BN("70")), "wrong before");
-      await votingContract.updatePoolLoserWinnersDistributionPercentage(11);
-      assert.equal(0, (await votingContract.poolLoserWinnersDistributionPercentage.call()).cmp(new BN("11")), "wrong after");
+      assert.equal(0, (await votingContract.poolLoserBalanceToNextEpochPercentage.call()).cmp(new BN("30")), "wrong before");
+      await votingContract.updatePoolLoserBalanceToNextEpochPercentage(11);
+      assert.equal(0, (await votingContract.poolLoserBalanceToNextEpochPercentage.call()).cmp(new BN("11")), "wrong after");
     });
   });
 
-  describe("updatePoolWinnerVoterRefundPercentage", function () {
+  describe("updateDevFeePercentage", function () {
     it("should fail if not owner", async function () {
-      await expectRevert(votingContract.updatePoolWinnerVoterRefundPercentage(11, {
+      await expectRevert(votingContract.updateDevFeePercentage(12, {
         from: OTHER
       }), "Ownable: caller is not the owner");
     });
-
+    
     it("should fail if _percentage == 0", async function () {
-      await expectRevert(votingContract.updatePoolWinnerVoterRefundPercentage(0), "Wrong _percentage");
-    });
-
-    it("should fail if _percentage > 100", async function () {
-      await expectRevert(votingContract.updatePoolWinnerVoterRefundPercentage(111), "Wrong _percentage");
+      await expectRevert(votingContract.updateDevFeePercentage(0), "Wrong _percentage");
     });
     
-    it("should set correct value", async function () {
-      assert.equal(0, (await votingContract.poolWinnerVoterRefundPercentage.call()).cmp(new BN("95")), "wrong before");
-      await votingContract.updatePoolWinnerVoterRefundPercentage(12);
-      assert.equal(0, (await votingContract.poolWinnerVoterRefundPercentage.call()).cmp(new BN("12")), "wrong after");
+    it("should fail if _percentage > 100", async function () {
+      await expectRevert(votingContract.updateDevFeePercentage(120), "Wrong _percentage");
+    });
+    
+    it("should set correct devFeePercentage", async function () {
+      assert.equal(0, (await votingContract.devFeePercentage.call()).cmp(new BN("5")), "wrong before");
+      await votingContract.updateDevFeePercentage(14);
+      assert.equal(0, (await votingContract.devFeePercentage.call()).cmp(new BN("14")), "wrong after");
     });
   });
 
