@@ -65,6 +65,7 @@ contract VersusVoting is Ownable {
   }
 
   /***
+    * @notice: Approve this Smart Contract to transferFrom owner VERSUS tokens.
     * @dev Constructor function.
     * @param _devFeeReceiver Receiver of devFee.
     * @param _versusToken VersusToken address.
@@ -233,7 +234,7 @@ contract VersusVoting is Ownable {
     * @dev Finishes ongoing epoch & performs calculations.
    */
   function finishEpoch() external onlyOwner {
-    // require(block.timestamp >= currentEpochStartedAt + epochDuration, "Epoch running");  TODO: test
+    require(block.timestamp >= currentEpochStartedAt + epochDuration, "Epoch running");
 
     if (balanceForPool[currentEpoch][Pool.one].staked > balanceForPool[currentEpoch][Pool.two].staked) {
       performCalculationsForPoolWinner(Pool.one);
@@ -288,7 +289,7 @@ contract VersusVoting is Ownable {
     //  70% should be PROPORTIONALLY distributed among voters in winning pool.
   }
 
-  /**
+  /***
     * @dev Calculates pending reward for player.
     * @param _loopLimit Limit for epoch looping. Use 0 for all epochs until now.
     * @return amount Reward amount.
@@ -325,6 +326,7 @@ contract VersusVoting is Ownable {
         uint256 reward = ((rewardPoolWinner + rewardPoolLoser) * myPortion) / 100 ether;
         amount += reward;
       } else if (result.poolWinner == Pool.none) {
+        //  TODO: remove?
         if (vote.stake > 0) {
           amount += vote.stake;
         }
@@ -332,7 +334,7 @@ contract VersusVoting is Ownable {
     }
   }
 
-  /**
+  /***
     * @dev Calculates reward for player in winner pool.
     * @param _epoch Epoch.
     * @param _pool Winner pool.
@@ -344,7 +346,7 @@ contract VersusVoting is Ownable {
     return balanceTotal - devFee;
   }
 
-  /**
+  /***
     * @dev Calculates loser pool chunk to be received by player in winner pool.
     * @param _epoch Epoch.
     * @param _pool Looser pool.
@@ -359,7 +361,7 @@ contract VersusVoting is Ownable {
     return (balanceLoser * (100 - poolLoserBalanceToNextEpochPercentage)) / 100;
   }
 
-  /**
+  /***
     * @notice Decimals are lost in Solidity, thus use 1 eth for precision.
     * @dev Calculates stake percentage.
     * @param _epoch Epoch.
@@ -373,7 +375,6 @@ contract VersusVoting is Ownable {
   /**
     * @dev Withdraws pending reward.
     * @param _loopLimit Limit for epoch looping.
-    * TODO: approve this Snart Contract to transferFrom owner VERSUS tokens.
    */
   function withdrawPendingReward(uint256 _loopLimit) external {
     uint256 versusBonusTmp = pendingVersusTokenBonus[msg.sender];
