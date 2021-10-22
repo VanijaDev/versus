@@ -618,16 +618,6 @@
 		"devdoc": {
 			"kind": "dev",
 			"methods": {
-				"calculatePendingReward(uint256)": {
-					"details": "Calculates pending reward for player.",
-					"params": {
-						"_loopLimit": "Limit for epoch looping. Use 0 for all epochs until now."
-					},
-					"returns": {
-						"amount": "Reward amount.",
-						"updatedStartIdx": "Updated epoch idx to start following calculations."
-					}
-				},
 				"finishEpoch()": {
 					"details": "Finishes ongoing epoch & performs calculations."
 				},
@@ -643,7 +633,7 @@
 				"withdrawPendingReward(uint256)": {
 					"details": "Withdraws pending reward.",
 					"params": {
-						"_loopLimit": "Limit for epoch looping. TODO: approve this Snart Contract to transferFrom owner VERSUS tokens."
+						"_loopLimit": "Limit for epoch looping."
 					}
 				}
 			},
@@ -696,11 +686,11 @@
 			]
 		},
 		"contracts/VersusVoting.sol": {
-			"keccak256": "0x145a01243ed309a582be9f7c72bc1c7ce614a9a1e25420e53cde537f76238f58",
+			"keccak256": "0x2c6be7f5be7fd91b78254783006df30e282634cc87d7cf0b0feb01c67d3d9dd8",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://3f89903942509616d939678fca83146f8bab2e9fbba08e0af875e36df981cd46",
-				"dweb:/ipfs/QmTGpiyAKUwoAcMw6cxvEvMvcGBUb7TRKQRu3bc4fCDSRh"
+				"bzz-raw://eceb1c49300bae2a463f4a34bd40163a762a4a519551b38ad7eb163bff20d9d9",
+				"dweb:/ipfs/QmXt5V9fAHRyJvaasGMaVJyFVKuocRonhjz7XEqMziqbDS"
 			]
 		}
 	},

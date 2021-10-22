@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Versus app</title>
+  <script src="./index.js"></script>
+</head>
+
+<body>
+  <h1>Versus voting</h1>
+
+  <div>
+    <h3 style="display: inline-block;" >User Account:</h3> <h3 id="userAccount" style="display: inline-block; margin-left: 5px;">...</h3> (<span id="userBalance">...</span> BNB)
+  </div> 
+  <div>
+    <h3 style="display: inline-block;" >Current epoch:</h3> <h3 id="currentEpoch" style="display: inline-block; margin-left: 5px;">...</h3>
+  </div>
+  <div>
+    <h3 style="display: inline-block;" >Minimum Stake:</h3> <h3 id="minStake" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > BNB</h3>
+  </div>
+  <div>
+    <h3 style="display: inline-block;" >Pending reward:</h3> <h3 id="pendingRewardBNB" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > BNB</h3> 
+    </br>
+    <h3 style="display: inline-block;" >Pending reward:</h3> <h3 id="pendingRewardVERSUS" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > VERSUS</h3>
+    </br>
+    <button onclick="window.Index.withdrawPendingReward()">Withdraw</button>
+  </div>
+
+  <div style="margin: auto; width: fit-content;">
+    <h2 style="display: inline-block;" >Time left for Epoch:</h2> <h3 id="epochCountdown" style="display: inline-block; margin-left: 5px;">...</h3>
+  </div> 
+
+  <div style="padding-bottom: 50px;">
+    <h2 style="margin: auto; width: fit-content;">Voting Pools</h2>
+
+    <!-- Pool 1 -->
+    <div style="width: 50%; background-color: aliceblue; float: left;">
+      <h2 style="margin: auto; width: fit-content;">Pool 1</h2>
+      <p>Balance: <span id="balancePool_1"></span></p>
+      
+      <input id="amountPool_1" type="number">
+      <button onclick="window.Index.makeVote(1)">Vote</button>
+    </div>
+
+    <!-- Pool 2 -->
+    <div style="width: 50%; background-color:antiquewhite; float: left;">
+      <h2 style="margin: auto; width: fit-content;">Pool 2</h2>
+      <p>Balance:  <span id="balancePool_2"></span></p>
+
+      <input id="amountPool_2" type="number">
+      <button onclick="window.Index.makeVote(2)">Vote</button>
+    </div>
+    </div>
+  </div>
+
+  <div style="margin: auto; width: fit-content; padding-top: 100px;">
+    <button onclick="window.Index.finishEpoch()">Finish Epoch</button>
+  </div>
+</body>
+
+</html>

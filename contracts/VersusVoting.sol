@@ -326,10 +326,7 @@ contract VersusVoting is Ownable {
         uint256 reward = ((rewardPoolWinner + rewardPoolLoser) * myPortion) / 100 ether;
         amount += reward;
       } else if (result.poolWinner == Pool.none) {
-        //  TODO: remove?
-        if (vote.stake > 0) {
-          amount += vote.stake;
-        }
+        amount += vote.stake;
       }
     }
   }
