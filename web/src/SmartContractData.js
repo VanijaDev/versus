@@ -361,7 +361,7 @@ const versusTokenABI = () => {
 }
 
 const versusVotingAddress = () => {
-  return "0xaFAA1A1B2D9387CFA3B20D9D78694D1d0D69Dc28";
+  return "0x8903f92F1612A42475e06dE7Be7de0072fA922CE";
 }
 const versusVotingABI = () => {
   return [

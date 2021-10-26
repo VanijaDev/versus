@@ -1,7 +1,7 @@
 import { versusTokenAddress, versusTokenABI, versusVotingAddress, versusVotingABI } from "./SmartContractData";
+import {credentials} from "../secret"
 
 import Web3 from "web3";
-import BigNumber from "bignumber.js";
 
 export class BlockchainManager {
   //  web3
@@ -230,29 +230,6 @@ export class BlockchainManager {
     });
   }
 
-  async finishEpoch() {
-    const thisLocal = this;
-    this.versusVoting.methods.finishEpoch().send({
-      from: this.userAccount
-    })
-    .on('transactionHash', function(hash){
-      console.log(`tx sent, hash: ${hash}`);
-    })
-    .on('confirmation', function(confirmationNumber, receipt){
-        //  needed?
-    })
-    .on('receipt', async function(receipt){
-      console.log(`tx SUCCESS, hash: ${receipt.transactionHash}`);
-      await thisLocal.updateCurrentEpoch();
-      thisLocal.updatePoolBalances();
-      thisLocal.updateUserBalance();
-      thisLocal.updateCountdown();
-    })
-    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-      console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
-    });
-  }
-
   async withdrawPendingReward() {
     const thisLocal = this;
     this.versusVoting.methods.withdrawPendingReward(0).send({
@@ -276,6 +253,59 @@ export class BlockchainManager {
         alert("User denied tx.");
       }
     });
+  }
+
+  async finishEpoch() {
+    //  TODO: use https://infura.io/ or https://moralis.io/ or smt other
+
+    const privKey = credentials("priv"); //  TODO: use .env or .secret for secret storage
+    const pubAddress = credentials("pub"); //  TODO: use .env or .secret for secret storage
+
+    //  1/2 - get gasPrice from web3
+    const gasPrice = parseInt(await this.web3.eth.getGasPrice()) * 1.5; //  1.5 as a safeguard
+
+    //  2/2 - use API of https://ethgasstation.info/ or https://etherscan.io/ or any other
+    // const gasPrice = this.web3.utils.toWei('13', 'Gwei');
+
+    //  create tx object
+    const txObject = {
+      from: pubAddress,
+      to: this.versusVoting._address,
+      gasLimit: 500000,
+      gasPrice: gasPrice,
+      data: this.versusVoting.methods.finishEpoch().encodeABI()
+    }
+
+
+    //  validate transaction
+    console.log("validating Transaction...");
+    let txValidated = false;
+
+    //  TODO: use try catch to retry
+    try {
+      let estimatedGas = await this.web3.eth.estimateGas(txObject);
+      txObject.gasLimit = parseInt(estimatedGas) * 1.5; //  1.5 as a safeguard
+      console.log("txObject: ", txObject);
+      txValidated = true;
+    } catch (error) {
+      console.log("estimatedGas error: ", error);
+      //  TODO: handle & retry few times
+    }
+
+    if (!txValidated) {
+      return;
+    }
+
+    console.log("sendSignedTransaction...");
+    const signedTxObject = await this.web3.eth.accounts.signTransaction(txObject, privKey);
+
+    //  TODO: use try catch to retry
+    try {
+      const tx = await this.web3.eth.sendSignedTransaction(signedTxObject.raw || signedTxObject.rawTransaction);
+      console.log("SUCCESS tx: ", tx);
+    } catch (error) {
+      console.log("ERROR tx: ", error);
+    }
   }
 
 
