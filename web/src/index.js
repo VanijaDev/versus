@@ -2,14 +2,14 @@ import { BlockchainManager } from "./BlockchainManager";
 
 export default class Index {
   constructor() {
-    console.log("hello world in constructor");
-    this.bm = new BlockchainManager();
-
-    this.bm.init();
+    setTimeout(() => {
+      this.bm = new BlockchainManager();
+      this.initBlockchainManager();
+    }, 300);  //  wait 0.3 sec for window to init ethereum
   }
 
-  updateUserAccount() {
-    this.bm.updateUserAccount();
+  initBlockchainManager() {
+    this.bm.init();
   }
 
   async makeVote(_pool) {

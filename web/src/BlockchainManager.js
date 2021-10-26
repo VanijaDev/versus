@@ -11,6 +11,8 @@ export class BlockchainManager {
   //  versusVoting
   //  mininStake   //  in wei
   //  finishAt
+  //  isEventListenersInited
+  //  vote -> pool, stake
 
   constructor() {
     console.log("BlockchainManager constructor");
@@ -21,7 +23,7 @@ export class BlockchainManager {
     }
 
     if (window.ethereum.chainId != "0x61") {
-      alert("use BSC Test");
+      alert(`use BSC Test: ${window.ethereum.chainId}`);
     }
     
     if (!window.ethereum.isMetaMask) {
@@ -40,18 +42,24 @@ export class BlockchainManager {
 
   async init() {
     console.log("BlockchainManager init");
-    
+    await this.updateUI();
+
+    if (!this.isEventListenersInited) {
+      this.setupEventListeners();
+    }
+  }
+
+  async updateUI() {
     await this.updateUserAccount();
     await this.updateUserBalance();
     await this.updateCurrentEpoch();
     this.updateCountdown();
     await this.updatePoolBalances();
+    await this.updateMyVote();
     await this.updateMinStake();
 
-    await this.updatePendingReward("BNB");
     await this.updatePendingReward("VERSUS");
-
-    await this.setupEventListener();
+    await this.updatePendingReward("BNB");
   }
 
   async updateUserAccount() {
@@ -115,7 +123,6 @@ export class BlockchainManager {
   async epochFinishAt() {
     const epochStarted = parseInt(await this.getEpochStartedAt());
     const epochDuration = parseInt(await this.getEpochDuration());
-    const currentTimestamp = parseInt(new Date().getTime() / 1000);
     return (epochStarted + epochDuration) * 1000;
   }
 
@@ -135,6 +142,22 @@ export class BlockchainManager {
     document.getElementById("balancePool_2").innerHTML = this.web3.utils.fromWei(balancePool_2);
   }
 
+  async updateMyVote() {
+    const vote = await this.versusVoting.methods.getVoteForVoter(this.currentEpoch, this.userAccount).call();
+    this.vote = vote;
+
+    if (parseInt(vote.pool) == 1) {
+      document.getElementById("myStakePool_1").innerHTML = this.web3.utils.fromWei(vote.stake);
+      document.getElementById("myStakePool_2").innerHTML = "0";
+    } else if (parseInt(vote.pool) == 2) {
+      document.getElementById("myStakePool_2").innerHTML = this.web3.utils.fromWei(vote.stake);
+      document.getElementById("myStakePool_1").innerHTML = "0";
+    } else {
+      document.getElementById("myStakePool_1").innerHTML = "0";
+      document.getElementById("myStakePool_2").innerHTML = "0";
+    }
+  }
+
   async updateMinStake() {
     this.minStake = await this.versusVoting.methods.minStake().call();
     document.getElementById("minStake").innerHTML = this.web3.utils.fromWei(this.minStake);
@@ -142,10 +165,10 @@ export class BlockchainManager {
 
   async updatePendingReward(_cryptoName) {
     if (!_cryptoName.localeCompare("BNB")) {
-      // const pendingBNB = (await this.versusVoting.methods.calculatePendingReward(0).call()).amount;
-      // document.getElementById("pendingRewardBNB").innerHTML = this.web3.utils.fromWei(pendingBNB);
+      const pendingBNB = (await this.versusVoting.methods.calculatePendingReward("0").call({from: this.userAccount})).amount;
+      document.getElementById("pendingRewardBNB").innerHTML = this.web3.utils.fromWei(pendingBNB);
     } else if (!_cryptoName.localeCompare("VERSUS")) {
-      const pendingVersus = await this.versusVoting.methods.pendingVersusTokenBonus(this.userAccount).call();
+      const pendingVersus = await this.versusVoting.methods.pendingVersusTokenBonus(this.userAccount).call({from: this.userAccount});
       document.getElementById("pendingRewardVERSUS").innerHTML = this.web3.utils.fromWei(pendingVersus);
     } else {
       throw Error(`Wrong crypto: ${_cryptoName}`);
@@ -159,8 +182,15 @@ export class BlockchainManager {
       throw Error(`Wrong Pool: ${_pool}`);
     }
 
+    if (parseInt(this.vote.pool) != 0) {
+      if (parseInt(this.vote.pool) != parseInt(_pool)) {
+        alert("Already voted for other pool.");
+        return;
+      }
+    }
+
     const amountWei = this.web3.utils.toWei(document.getElementById("amountPool_"+_pool).value, "ether");
-    console.log("amountWei: ", amountWei);
+    // console.log("amountWei: ", amountWei);
 
     if (parseInt(amountWei) < parseInt(this.minStake)) {
       alert("less then min stake");
@@ -188,9 +218,15 @@ export class BlockchainManager {
       console.log(`tx SUCCESS, hash: ${receipt.transactionHash}`);
       thisLocal.updatePoolBalances();
       thisLocal.updateUserBalance();
+      thisLocal.updatePendingReward("VERSUS");
+      thisLocal.updateMyVote();
     })
     .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
       console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
+
+      if (error.code == 4001) {
+        alert("User denied tx.");
+      }
     });
   }
 
@@ -235,20 +271,61 @@ export class BlockchainManager {
     })
     .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
       console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
+      
+      if (error.code == 4001) {
+        alert("User denied tx.");
+      }
     });
   }
 
 
   //  Events
-  async setupEventListener() {
+  setupEventListeners() {
+    this.setupEventListenerVoted();
+    this.setupEventListenerEpochFinished();
+
+    this.isEventListenersInited = true;
+  }
+
+  setupEventListenerVoted() {
     // event Voted(uint8 pool, address voter, uint256 amount);
     
     const thisLocal = this;
     this.versusVoting.events.Voted(function (error, event) {
       // console.log("event: ", event);
+      if (error) {
+        throw new Error(`Voted event error: ${error}`);
+      }
+
       if (event.returnValues.voter.toLowerCase().localeCompare(thisLocal.userAccount.toLowerCase())) {
         thisLocal.updatePoolBalances();
+        thisLocal.updateMyVote();
       }
+    })
+    .on("connected", function(subscriptionId){
+        //  TODO: needed?
+    })
+    .on('data', function (event) {
+        // console.log(event); // same results as the optional callback above
+    })
+    .on('changed', function(event){
+        // remove event from local database
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      //  TODO: needed?
+    });
+  }
+
+  setupEventListenerEpochFinished() {
+    // event EpochFinished(uint256 epoch);
+    
+    const thisLocal = this;
+    this.versusVoting.events.EpochFinished(function (error, event) {
+      // console.log("event: ", event);
+      if (error) {
+        throw new Error(`EpochFinished event error: ${error}`);
+      }
+      thisLocal.updateUI();
     })
     .on("connected", function(subscriptionId){
         //  TODO: needed?
@@ -266,6 +343,7 @@ export class BlockchainManager {
 };
 
 
+//  Etehreum events
 ethereum.on('chainChanged', (chainId) => {
   console.log(`chainChanged: ${chainId}`);
   location.reload();
@@ -273,5 +351,5 @@ ethereum.on('chainChanged', (chainId) => {
 
 ethereum.on('accountsChanged', function (accounts) {
   console.log(`accountsChanged: ${accounts}`);
-  window.Index.updateUserAccount();
+  window.Index.initBlockchainManager();
 });
