@@ -86,7 +86,8 @@ export class BlockchainManager {
     const now = new Date().getTime();
 
     if (this.finishAt <= now) {
-      alert(`Epoch finished ${this.finishAt - now} seconds ago`)
+      alert(`Epoch finished ${this.finishAt - now} seconds ago`);
+      document.getElementById("epochCountdown").innerHTML = "Epoch Finished";
       return;
     }
 
