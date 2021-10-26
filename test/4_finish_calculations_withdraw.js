@@ -295,11 +295,13 @@ contract("Voting Smart Contract", function (accounts) {
   });
 
   describe("calculatePendingReward", function () {
-    it("should fail if No epoch", async function () {
-      await expectRevert(votingContract.calculatePendingReward(0), "No epoch");
+    it("should return 0,0 if No epoch played", async function () {
+      const res = await votingContract.calculatePendingReward.call(0);
+      assert.equal(0, res.amount.cmp(new BN("0")), "amount must be 0");
+      assert.equal(0, res.updatedStartIdx.cmp(new BN("0")), "updatedStartIdx must be 0");
     });
 
-    it("should fail if Wrong startIdx", async function () {
+    it("should return 0,0 if startIdx is current epoch", async function () {
       await votingContract.makeVote(1, {
         from: VOTER_0,
         value: ether("0.22")
@@ -309,7 +311,9 @@ contract("Voting Smart Contract", function (accounts) {
       await votingContract.finishEpoch();
       await votingContract.withdrawPendingReward(0, {from: VOTER_0});
 
-      await expectRevert(votingContract.calculatePendingReward(0, {from: VOTER_0}), "Wrong startIdx");
+      const res = await votingContract.calculatePendingReward.call(0);
+      assert.equal(0, res.amount.cmp(new BN("0")), "amount must be 0");
+      assert.equal(0, res.updatedStartIdx.cmp(new BN("0")), "updatedStartIdx must be 0");
     });
     
     it("should fail if Wrong stopIdx", async function () {
@@ -324,13 +328,15 @@ contract("Voting Smart Contract", function (accounts) {
       await expectRevert(votingContract.calculatePendingReward(10, {from: VOTER_0}), "Wrong stopIdx");
     });
 
-    it("should fail if No reward", async function () {
+    it("should return 0,0 if stopIdx is current epoch", async function () {
       await votingContract.makeVote(1, {
         from: VOTER_0,
         value: ether("0.22")
       });
 
-      await expectRevert(votingContract.calculatePendingReward(0, {from: VOTER_0}), "No reward");
+      const res = await votingContract.calculatePendingReward.call(0);
+      assert.equal(0, res.amount.cmp(new BN("0")), "amount must be 0");
+      assert.equal(0, res.updatedStartIdx.cmp(new BN("0")), "updatedStartIdx must be 0");
     });
 
     it("should add 0 for pool loser if has no votes", async function () {

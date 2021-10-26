@@ -297,16 +297,22 @@ contract VersusVoting is Ownable {
    */
   function calculatePendingReward(uint256 _loopLimit) public view returns (uint256 amount, uint256 updatedStartIdx) {
     uint256[] memory epochList = epochListForVoter[msg.sender];
-    require(epochList.length > 0, "No epoch");
+    if (epochList.length == 0) {
+      return(0, 0);
+    }
 
     uint256 startIdx = indexToStartCalculationsForVoter[msg.sender];
-    require(startIdx < epochList.length, "Wrong startIdx");
+    if (startIdx >= epochList.length) {
+      return(0, 0);
+    }
 
     uint256 stopIdx = (_loopLimit == 0) ? epochList.length - 1 : (startIdx + _loopLimit) - 1;
     require(stopIdx < epochList.length, "Wrong stopIdx");
     
     if (epochList[stopIdx] == currentEpoch) {
-      require(stopIdx > 0, "No reward");
+      if (stopIdx == 0) {
+        return(0, 0);
+      }
       stopIdx --;
     }
 
