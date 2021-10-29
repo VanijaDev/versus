@@ -1,5 +1,5 @@
 const versusTokenAddress = () => {
-  return "0x8e7bC34f21EBE242dC0aE36F37C27AdA4382FdBB";
+  return "0x527a382ec2A08660451Ab06A7dAb8887ecb01978";
 }
 
 const versusTokenABI = () => {
@@ -361,7 +361,7 @@ const versusTokenABI = () => {
 }
 
 const versusVotingAddress = () => {
-  return "0x8903f92F1612A42475e06dE7Be7de0072fA922CE";
+  return "0x135556365F171cEC8001E69EE120B4f8a0760a15";
 }
 const versusVotingABI = () => {
   return [
@@ -456,6 +456,19 @@ const versusVotingABI = () => {
 		],
 		"name": "Voted",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "bnbRewardsWithdrawn",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -974,7 +987,7 @@ const versusVotingABI = () => {
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
-	];
+];
 }
 
 export {

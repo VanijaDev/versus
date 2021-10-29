@@ -161,7 +161,11 @@ export class BlockchainManager {
 
   async updateMinStake() {
     this.minStake = await this.versusVoting.methods.minStake().call();
-    document.getElementById("minStake").innerHTML = this.web3.utils.fromWei(this.minStake);
+    const minStakeEth = this.web3.utils.fromWei(this.minStake);
+    document.getElementById("minStake").innerHTML = minStakeEth;
+
+    document.getElementById("amountPool_1").value = minStakeEth;
+    document.getElementById("amountPool_2").value = minStakeEth;
   }
 
   async updatePendingReward(_cryptoName) {
@@ -258,6 +262,8 @@ export class BlockchainManager {
 
   async finishEpoch() {
     //  TODO: use https://infura.io/ or https://moralis.io/ or smt other
+    //  var web3 = new Web3("infura_url");
+
 
     const privKey = credentials("priv"); //  TODO: use .env or .secret for secret storage
     const pubAddress = credentials("pub"); //  TODO: use .env or .secret for secret storage
@@ -307,6 +313,12 @@ export class BlockchainManager {
     } catch (error) {
       console.log("ERROR tx: ", error);
     }
+
+    let checkEpoch = parseInt(await this.versusVoting.methods.currentEpoch().call());
+    checkEpoch--;
+    console.log(`checkEpoch: ${checkEpoch}`);
+    const poolWinner = (await this.versusVoting.methods.epochResult(checkEpoch).call()).poolWinner;
+    console.log(`poolWinner : ${poolWinner}`);
   }
 
 

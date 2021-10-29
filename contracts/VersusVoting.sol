@@ -41,6 +41,7 @@ contract VersusVoting is Ownable {
   uint256 public epochDuration;
   uint256 public minStake;
   uint256 public versusBonus;
+  uint256 public bnbRewardsWithdrawn;
 
   mapping(address => uint256) public pendingVersusTokenBonus;                   //  (voter => amount)
   mapping(uint256 => EpochResult) public epochResult;                           //  (epoch => EpochResult)
@@ -389,6 +390,7 @@ contract VersusVoting is Ownable {
     (uint256 amount, uint256 updatedStartIdx) = calculatePendingReward(_loopLimit);
     if (amount > 0) {
       indexToStartCalculationsForVoter[msg.sender] = updatedStartIdx;
+      bnbRewardsWithdrawn += amount;
       (payable(msg.sender)).transfer(amount);
     }
 

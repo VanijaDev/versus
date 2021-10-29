@@ -920,5 +920,27 @@ contract("Voting Smart Contract", function (accounts) {
       await votingContract.withdrawPendingReward(0, {from: VOTER_0});
       await expectRevert(votingContract.withdrawPendingReward(0, {from: VOTER_0}), "No reward");
     });
+
+    it("should increase bnbRewardsWithdrawn", async function () {
+      await votingContract.makeVote(1, {
+        from: VOTER_0,
+        value: ether("0.22")
+      });
+
+      await votingContract.makeVote(2, {
+        from: VOTER_1,
+        value: ether("0.32")
+      });
+      
+      await time.increase(time.duration.hours(3));
+      await votingContract.finishEpoch();
+
+      const bnbRewardsWithdrawn_before = await votingContract.bnbRewardsWithdrawn.call();
+
+      await votingContract.withdrawPendingReward(0, { from: VOTER_1 });
+
+      const bnbRewardsWithdrawn_after = await votingContract.bnbRewardsWithdrawn.call();
+      assert.isTrue((new BN(bnbRewardsWithdrawn_after)).gt(new BN(bnbRewardsWithdrawn_before)), "bnbRewardsWithdrawn should be increased");
+    });
   });
 });
