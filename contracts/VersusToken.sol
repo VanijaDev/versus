@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract VersusToken is ERC20("VERSUS", "VERSUS"), Ownable {
 
-  uint256 public constant MAX_SUPPLY = 0x1A784379D99DB42000000; //  2,000,000 * 10**18
+  uint256 public constant MAX_SUPPLY = 0x1A784379D99DB42000000; //  2,000,000 * 10^18
 
   /***
     * @dev Mints amount to receiver.

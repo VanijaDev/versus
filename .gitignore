@@ -1,4 +1,5 @@
 build
 node_modules
+contracts/artifacts
 web/secret.js
 web/node_modules
