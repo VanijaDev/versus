@@ -269,7 +269,7 @@ export class BlockchainManager {
     document.getElementById("availableRewardVersus").innerHTML = this.web3.utils.fromWei(rewardVersus);
 
     //  1
-    const rewardBnb = await this.versusStaking.methods.calculateAvailableVersusReward(2).call({from: this.userAccount});
+    const rewardBnb = await this.versusStaking.methods.calculateAvailableBNBReward().call({from: this.userAccount});
     document.getElementById("availableRewardBNB").innerHTML = this.web3.utils.fromWei(rewardBnb);
   }
 
