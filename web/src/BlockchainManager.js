@@ -1,4 +1,4 @@
-import { versusTokenAddress, versusTokenABI, versusVotingAddress, versusVotingABI } from "./SmartContractData";
+import { versusTokenAddress, versusTokenABI, versusVotingAddress, versusVotingABI, versusStakingABI, versusStakingAddress } from "./SmartContractData";
 import {credentials} from "../secret"
 
 import Web3 from "web3";
@@ -9,10 +9,20 @@ export class BlockchainManager {
   //  currentEpoch
   //  versusToken
   //  versusVoting
-  //  mininStake   //  in wei
+  //  versusStaking
+  //  minStake   //  in wei
   //  finishAt
   //  isEventListenersInited
   //  vote -> pool, stake
+
+  //  balanceVersus
+  //  stakingPoolBalanceBNB
+  //  minStakeForStaking_1
+  //  minStakeForStaking_2
+  //  versusInPool_1
+  //  versusInPool_2
+  //  apy_1
+  //  apy_2
 
   constructor() {
     console.log("BlockchainManager constructor");
@@ -38,6 +48,9 @@ export class BlockchainManager {
 
     this.versusVoting = new this.web3.eth.Contract(versusVotingABI(), versusVotingAddress());
     // console.log("versusVoting: ", this.versusVoting);
+
+    this.versusStaking = new this.web3.eth.Contract(versusStakingABI(), versusStakingAddress());
+    // console.log("versusStaking: ", this.versusStaking);
   }
 
   async init() {
@@ -54,12 +67,15 @@ export class BlockchainManager {
     await this.updateUserBalance();
     await this.updateCurrentEpoch();
     this.updateCountdown();
-    await this.updatePoolBalances();
-    await this.updateMyVote();
-    await this.updateMinStake();
+    this.updatePoolBalances();
+    this.updateMyVote();
+    this.updateMinStake();
 
-    await this.updatePendingReward("VERSUS");
-    await this.updatePendingReward("BNB");
+    this.updatePendingReward("VERSUS");
+    this.updatePendingReward("BNB");
+
+    //  Staking
+    this.updateStakingUI();
   }
 
   async updateUserAccount() {
@@ -178,6 +194,83 @@ export class BlockchainManager {
     } else {
       throw Error(`Wrong crypto: ${_cryptoName}`);
     }
+  }
+
+  //  Staking
+  async updateStakingUI() {
+    this.updateBalanceVersus();
+    this.updateStakingPoolBalanceBNB();
+    this.updateStakingPoolBalanceVersus();
+    this.updateMinStakeForStaking();
+    this.updateVersusInPool();
+    this.updateAPY();
+    this.updateMyStake();
+    this.updateAvailableReward();
+  }
+  
+  async updateBalanceVersus() {
+    this.balanceVersus = await this.versusToken.methods.balanceOf(this.userAccount).call();  //  in wei
+    document.getElementById("balanceVersus").innerHTML = this.web3.utils.fromWei(this.balanceVersus);
+  }
+  
+  async updateStakingPoolBalanceBNB() {
+    this.stakingPoolBalanceBNB = await await this.web3.eth.getBalance(this.versusStaking._address);  //  in wei
+    document.getElementById("stakingPoolBalanceBNB").innerHTML = this.web3.utils.fromWei(this.stakingPoolBalanceBNB);
+  }
+
+  async updateStakingPoolBalanceVersus() {
+    this.stakingPoolBalanceVersus = await this.versusToken.methods.balanceOf(this.versusStaking._address).call();  //  in wei
+    document.getElementById("stakingPoolBalanceVersus").innerHTML = this.web3.utils.fromWei(this.stakingPoolBalanceVersus);
+  }
+
+  async updateMinStakeForStaking() {
+    //  0
+    this.minStakeForStaking_1 = await this.versusStaking.methods.minStake(1).call();
+    document.getElementById("minStakeForStaking_1").innerHTML = this.web3.utils.fromWei(this.minStakeForStaking_1);
+
+    //  1
+    this.minStakeForStaking_2 = await this.versusStaking.methods.minStake(2).call();
+    document.getElementById("minStakeForStaking_2").innerHTML = this.web3.utils.fromWei(this.minStakeForStaking_2);
+  }
+  
+  async updateVersusInPool() {
+    //  0
+    this.versusInPool_1 = await this.versusStaking.methods.versusInPool(1).call();
+    document.getElementById("versusInPool_1").innerHTML = this.web3.utils.fromWei(this.versusInPool_1);
+
+    //  1
+    this.versusInPool_2 = await this.versusStaking.methods.versusInPool(2).call();
+    document.getElementById("versusInPool_2").innerHTML = this.web3.utils.fromWei(this.versusInPool_2);
+  }
+
+  async updateAPY() {
+    //  0
+    this.apy_1 = await this.versusStaking.methods.apy(1).call();
+    document.getElementById("apy_1").innerHTML = this.apy_1;
+
+    //  1
+    this.apy_2 = await this.versusStaking.methods.apy(2).call();
+    document.getElementById("apy_2").innerHTML = this.apy_2;
+  }
+
+  async updateMyStake() {
+    //  0
+    const stake_1 = await this.versusStaking.methods.getStakeOf(this.userAccount, 1).call();
+    document.getElementById("myStakeInPool_1").innerHTML = this.web3.utils.fromWei(stake_1.amount);
+
+    //  1
+    const stake_2 = await this.versusStaking.methods.getStakeOf(this.userAccount, 2).call();
+    document.getElementById("myStakeInPool_2").innerHTML = this.web3.utils.fromWei(stake_2.amount);
+  }
+
+  async updateAvailableReward() {
+    //  0
+    const rewardVersus = await this.versusStaking.methods.calculateAvailableVersusReward(1).call({from: this.userAccount});
+    document.getElementById("availableRewardVersus").innerHTML = this.web3.utils.fromWei(rewardVersus);
+
+    //  1
+    const rewardBnb = await this.versusStaking.methods.calculateAvailableVersusReward(2).call({from: this.userAccount});
+    document.getElementById("availableRewardBNB").innerHTML = this.web3.utils.fromWei(rewardBnb);
   }
 
 
@@ -321,11 +414,126 @@ export class BlockchainManager {
     console.log(`poolWinner : ${poolWinner}`);
   }
 
+  async makeStake(_pool) {
+    let amountWei;
+    if (parseInt(_pool) == 1) {
+      amountWei = this.web3.utils.toWei(document.getElementById("stake_versus_versus").value, "ether");
+      if (parseInt(amountWei) < parseInt(this.minStakeForStaking_1)) {
+        alert("less then min stake");
+        return;
+      }
+    } else if (parseInt(_pool) == 2) {
+      amountWei = this.web3.utils.toWei(document.getElementById("stake_versus_bnb").value, "ether");
+      if (parseInt(amountWei) < parseInt(this.minStakeForStaking_2)) {
+        alert("less then min stake");
+        return;
+      }
+    } else {
+      throw Error(`Wrong Pool: ${_pool}`);
+    }
+      
+    console.log("amountWei: ", amountWei);
+
+    if (parseInt(this.balanceVersus) < parseInt(amountWei)) {
+      alert("Not enough balance");
+      return;
+    }
+
+    const thisLocal = this;
+    this.versusStaking.methods.stake(_pool, amountWei).send({
+      from: this.userAccount
+    })
+    .on('transactionHash', function(hash){
+      console.log(`tx sent, hash: ${hash}`);
+    })
+    .on('confirmation', function(confirmationNumber, receipt){
+        //  needed?
+    })
+    .on('receipt', function(receipt){
+      console.log(`tx SUCCESS, hash: ${receipt.transactionHash}`);
+
+      thisLocal.updateStakingUI();
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
+
+      if (error.code == 4001) {
+        alert("User denied tx.");
+      }
+    });
+  }
+
+  async makeUnstake(_pool) {
+    if (parseInt(_pool) < 1 || parseInt(_pool) > 2) {
+      alert("Wrong pool");
+      return;
+    }
+
+    const thisLocal = this;
+    this.versusStaking.methods.unstake(_pool).send({
+      from: this.userAccount
+    })
+    .on('transactionHash', function(hash){
+      console.log(`tx sent, hash: ${hash}`);
+    })
+    .on('confirmation', function(confirmationNumber, receipt){
+        //  needed?
+    })
+    .on('receipt', function(receipt){
+      console.log(`tx SUCCESS, hash: ${receipt.transactionHash}`);
+
+      thisLocal.updateStakingUI();
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
+
+      if (error.code == 4001) {
+        alert("User denied tx.");
+      }
+    });
+  }
+
+  async withdrawStakingReward(_pool) {
+    if (parseInt(_pool) < 1 || parseInt(_pool) > 2) {
+      alert("Wrong pool");
+      return;
+    }
+
+    const thisLocal = this;
+    this.versusStaking.methods.withdrawAvailableReward(_pool).send({
+      from: this.userAccount
+    })
+    .on('transactionHash', function(hash){
+      console.log(`tx sent, hash: ${hash}`);
+    })
+    .on('confirmation', function(confirmationNumber, receipt){
+        //  needed?
+    })
+    .on('receipt', function(receipt){
+      console.log(`tx SUCCESS, hash: ${receipt.transactionHash}`);
+
+      thisLocal.updateStakingUI();
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
+
+      if (error.code == 4001) {
+        alert("User denied tx.");
+      }
+    });
+  }
+
+  
+
 
   //  Events
   setupEventListeners() {
     this.setupEventListenerVoted();
     this.setupEventListenerEpochFinished();
+
+    //  Staking
+    this.setupEventListenerStakeMade();
+    this.setupEventListenerUnstakeMade();
 
     this.isEventListenersInited = true;
   }
@@ -369,6 +577,63 @@ export class BlockchainManager {
         throw new Error(`EpochFinished event error: ${error}`);
       }
       thisLocal.updateUI();
+    })
+    .on("connected", function(subscriptionId){
+        //  TODO: needed?
+    })
+    .on('data', function (event) {
+        // console.log(event); // same results as the optional callback above
+    })
+    .on('changed', function(event){
+        // remove event from local database
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      //  TODO: needed?
+    });
+  }
+
+
+  setupEventListenerStakeMade() {
+    // event StakeMade(bool _isVersus, address _from, uint256 _amount);
+    
+    const thisLocal = this;
+    this.versusStaking.events.StakeMade(function (error, event) {
+      // console.log("event: ", event);
+      if (error) {
+        throw new Error(`StakeMade event error: ${error}`);
+      }
+
+      if (event.returnValues._from.toLowerCase().localeCompare(thisLocal.userAccount.toLowerCase())) {
+        thisLocal.updateStakingUI();
+      }
+    })
+    .on("connected", function(subscriptionId){
+        //  TODO: needed?
+    })
+    .on('data', function (event) {
+        // console.log(event); // same results as the optional callback above
+    })
+    .on('changed', function(event){
+        // remove event from local database
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      //  TODO: needed?
+    });
+  }
+
+  setupEventListenerUnstakeMade() {
+    // event UnstakeMade(bool _isVersus, address _from, uint256 _amount);
+    
+    const thisLocal = this;
+    this.versusStaking.events.UnstakeMade(function (error, event) {
+      // console.log("event: ", event);
+      if (error) {
+        throw new Error(`UnstakeMade event error: ${error}`);
+      }
+
+      if (event.returnValues._from.toLowerCase().localeCompare(thisLocal.userAccount.toLowerCase())) {
+        thisLocal.updateStakingUI();
+      }
     })
     .on("connected", function(subscriptionId){
         //  TODO: needed?

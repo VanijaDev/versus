@@ -15,6 +15,18 @@ export default class Index {
   async makeVote(_pool) {
     this.bm.makeVote(_pool);
   }
+
+  async makeStake(_pool) {
+    this.bm.makeStake(_pool);
+  }
+
+  async makeUnstake(_pool) {
+    this.bm.makeUnstake(_pool);
+  }
+
+  async withdrawStakingReward(_pool) {
+    this.bm.withdrawStakingReward(_pool);
+  }
   
   async finishEpoch() {
     this.bm.finishEpoch();

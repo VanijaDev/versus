@@ -8,56 +8,107 @@
 </head>
 
 <body>
-  <h1>Versus voting</h1>
+  <div>
+    <h1>Versus voting</h1>
+
+    <div>
+      <h3 style="display: inline-block;" >User Account:</h3> <h3 id="userAccount" style="display: inline-block; margin-left: 5px;">...</h3> (<span id="userBalance">...</span> BNB)
+    </div> 
+    <div>
+      <h3 style="display: inline-block;" >Current epoch:</h3> <h3 id="currentEpoch" style="display: inline-block; margin-left: 5px;">...</h3>
+    </div>
+    <div>
+      <h3 style="display: inline-block;" >Minimum Stake:</h3> <h3 id="minStake" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > BNB</h3>
+    </div>
+    <div>
+      <h3 style="display: inline-block;" >Pending reward:</h3> <h3 id="pendingRewardBNB" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > BNB</h3> 
+      </br>
+      <h3 style="display: inline-block;" >Pending reward:</h3> <h3 id="pendingRewardVERSUS" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > VERSUS</h3>
+      </br>
+      <button onclick="window.Index.withdrawPendingReward()">Withdraw</button>
+    </div>
+
+    <div style="margin: auto; width: fit-content;">
+      <h2 style="display: inline-block;" >Time left for Epoch:</h2> <h3 id="epochCountdown" style="display: inline-block; margin-left: 5px;">...</h3>
+    </div> 
+
+    <div style="padding-bottom: 50px;">
+      <h2 style="margin: auto; width: fit-content;">Voting Pools</h2>
+
+      <!-- Pool 1 -->
+      <div style="width: 50%; background-color: aliceblue; float: left;">
+        <h2 style="margin: auto; width: fit-content;">Pool 1</h2>
+        <p>Balance: <span id="balancePool_1">...</span> BNB</p>
+        <p>My stake: <span id="myStakePool_1">...</span> BNB</p>
+        
+        <input id="amountPool_1" type="number" value="0.1" step="0.1" min="0.1">
+        <button onclick="window.Index.makeVote(1)">Vote</button>
+      </div>
+
+      <!-- Pool 2 -->
+      <div style="width: 50%; background-color:antiquewhite; float: left;">
+        <h2 style="margin: auto; width: fit-content;">Pool 2</h2>
+        <p>Balance:  <span id="balancePool_2">...</span> BNB</p>
+        <p>My stake: <span id="myStakePool_2">...</span> BNB</p>
+
+        <input id="amountPool_2" type="number" value="0.1" step="0.1" min="0.1">
+        <button onclick="window.Index.makeVote(2)">Vote</button>
+      </div>
+      </div>
+    </div>
+
+    <div style="margin: auto; width: fit-content; padding-top: 100px;">
+      <button onclick="window.Index.finishEpoch()">Finish Epoch</button>
+    </div>
+  </div>
 
   <div>
-    <h3 style="display: inline-block;" >User Account:</h3> <h3 id="userAccount" style="display: inline-block; margin-left: 5px;">...</h3> (<span id="userBalance">...</span> BNB)
-  </div> 
-  <div>
-    <h3 style="display: inline-block;" >Current epoch:</h3> <h3 id="currentEpoch" style="display: inline-block; margin-left: 5px;">...</h3>
-  </div>
-  <div>
-    <h3 style="display: inline-block;" >Minimum Stake:</h3> <h3 id="minStake" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > BNB</h3>
-  </div>
-  <div>
-    <h3 style="display: inline-block;" >Pending reward:</h3> <h3 id="pendingRewardBNB" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > BNB</h3> 
-    </br>
-    <h3 style="display: inline-block;" >Pending reward:</h3> <h3 id="pendingRewardVERSUS" style="display: inline-block; margin-left: 5px;">...</h3> <h3 style="display: inline-block;" > VERSUS</h3>
-    </br>
-    <button onclick="window.Index.withdrawPendingReward()">Withdraw</button>
-  </div>
-
-  <div style="margin: auto; width: fit-content;">
-    <h2 style="display: inline-block;" >Time left for Epoch:</h2> <h3 id="epochCountdown" style="display: inline-block; margin-left: 5px;">...</h3>
-  </div> 
-
-  <div style="padding-bottom: 50px;">
-    <h2 style="margin: auto; width: fit-content;">Voting Pools</h2>
+    <h1>Versus staking (<span id="stakingPoolBalanceBNB">...</span> BNB, <span id="stakingPoolBalanceVersus">...</span> VERSUS)</h1>
+    <h3>User balance: <span id="balanceVersus">...</span> VERSUS</h3>
 
     <!-- Pool 1 -->
-    <div style="width: 50%; background-color: aliceblue; float: left;">
-      <h2 style="margin: auto; width: fit-content;">Pool 1</h2>
-      <p>Balance: <span id="balancePool_1">...</span> BNB</p>
-      <p>My stake: <span id="myStakePool_1">...</span> BNB</p>
-      
-      <input id="amountPool_1" type="number" value="0.1" step="0.1" min="0.1">
-      <button onclick="window.Index.makeVote(1)">Vote</button>
-    </div>
+      <div style="width: 50%; background-color: aliceblue; float: left;">
+        <h2 style="margin: auto; width: fit-content;">VERSUS_VERSUS</h2>
 
-    <!-- Pool 2 -->
-    <div style="width: 50%; background-color:antiquewhite; float: left;">
-      <h2 style="margin: auto; width: fit-content;">Pool 2</h2>
-      <p>Balance:  <span id="balancePool_2">...</span> BNB</p>
-      <p>My stake: <span id="myStakePool_2">...</span> BNB</p>
+        <p>Min stake: <span id="minStakeForStaking_1">...</span> VERSUS</p>
+        <p>Stake in pool: <span id="versusInPool_1">...</span> VERSUS</p>
+        <p>APY: <span id="apy_1">...</span> %</p>
+        <p>My stake: <span id="myStakeInPool_1">...</span> VERSUS</p>
+        <p>Available reward: <span id="availableRewardVersus">...</span> VERSUS</p>
+        
+        <input id="stake_versus_versus" type="number" value="0.1" step="0.1" min="0.1">
+        <button onclick="window.Index.makeStake(1)">Stake Versus Versus</button>
 
-      <input id="amountPool_2" type="number" value="0.1" step="0.1" min="0.1">
-      <button onclick="window.Index.makeVote(2)">Vote</button>
-    </div>
-    </div>
-  </div>
+        </br>
+        </br>
+        <button onclick="window.Index.makeUnstake(1)">Unstake + withdraw rewards</button>
+        </br>
+        </br>
+        <button onclick="window.Index.withdrawStakingReward(1)">Withdraw Staking Reward (no unstake)</button>
+      </div>
 
-  <div style="margin: auto; width: fit-content; padding-top: 100px;">
-    <button onclick="window.Index.finishEpoch()">Finish Epoch</button>
+      <!-- Pool 2 -->
+      <div style="width: 50%; background-color:antiquewhite; float: left;">
+        <h2 style="margin: auto; width: fit-content;">VERSUS_BNB</h2>
+
+        <p>Min stake: <span id="minStakeForStaking_2">...</span> VERSUS</p>
+        <p>Stake in pool: <span id="versusInPool_2">...</span> VERSUS</p>
+        <p>APY: <span id="apy_2">...</span> %</p>
+        <p>My stake: <span id="myStakeInPool_2">...</span> VERSUS</p>
+        <p>Available reward: <span id="availableRewardBNB">...</span> BNB</p>
+
+        <input id="stake_versus_bnb" type="number" value="0.1" step="0.1" min="0.1">
+        <button onclick="window.Index.makeStake(2)">Stake Versus BNB</button>
+
+        </br>
+        </br>
+        <button onclick="window.Index.makeUnstake(2)">Unstake + withdraw rewards</button>
+        </br>
+        </br>
+        <button onclick="window.Index.withdrawStakingReward(2)">Withdraw Staking Reward (no unstake)</button>
+      </div>
+      </div>
+    </div>
   </div>
 </body>
 

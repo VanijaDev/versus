@@ -32,8 +32,21 @@ contract("VersusStaking", function (accounts) {
     versusToken = await VersusToken.new();
     versusStaking = await VersusStaking.new(versusToken.address);
 
-    await versusToken.approve(versusStaking.address, ether("1000"));
     await versusToken.mint(OWNER, ether("1000"));
+    await versusToken.mint(PLAYER_0, ether("10"));
+    await versusToken.mint(PLAYER_1, ether("10"));
+    await versusToken.mint(OTHER, ether("10"));
+
+    await versusToken.approve(versusStaking.address, ether("1000"));
+    await versusToken.approve(versusStaking.address, ether("1000"), {
+      from: PLAYER_0
+    });
+    await versusToken.approve(versusStaking.address, ether("1000"), {
+      from: PLAYER_1
+    });
+    await versusToken.approve(versusStaking.address, ether("1000"), {
+      from: OTHER
+    });
 
     await web3.eth.sendTransaction({to: versusStaking.address, from: OWNER, value: ether("3")});
   });
@@ -267,6 +280,90 @@ contract("VersusStaking", function (accounts) {
       let stakeAfter = await versusStaking.getStakeOf.call(PLAYER_0, POOL_VERSUS_VERSUS);
       assert.isTrue(ether(web3.utils.fromWei(stakeAfter.amount, 'ether')).eq(ether("0.4")), "amount should be 0.4, 1");
     });
+
+    it("should update versusInPool", async function () {
+      //  POOL_VERSUS_VERSUS
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.2"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.2")), "should be 0.2 for POOL_VERSUS_VERSUS");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0")), "should be 0 for POOL_VERSUS_BNB");
+
+      //  POOL_VERSUS_VERSUS
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.12"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.32")), "should be 0.32 for POOL_VERSUS_VERSUS");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0")), "should be 0 for POOL_VERSUS_BNB");
+
+      //  POOL_VERSUS_BNB
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.1"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.32")), "should be 0.32 for POOL_VERSUS_VERSUS");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.1")), "should be 0.1 for POOL_VERSUS_BNB");
+
+      //  POOL_VERSUS_BNB
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.11"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.32")), "should be 0.32 for POOL_VERSUS_VERSUS");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.21")), "should be 0.2 for POOL_VERSUS_BNB");
+
+      //  POOL_VERSUS_VERSUS
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.11"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.43")), "should be 0.43 for POOL_VERSUS_VERSUS");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.21")), "should be 0.2 for POOL_VERSUS_BNB");
+    });
+
+    it("should transfer correct VERSUS amount from sender to versusStaking", async function () {
+      //  POOL_VERSUS_VERSUS
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.2"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_0)).cmp(ether("9.8")), "should be 9.8 for PLAYER_0");
+      assert.equal(0, (await versusToken.balanceOf.call(versusStaking.address)).cmp(ether("0.2")), "should be 0.2 for versusStaking");
+
+      //  POOL_VERSUS_VERSUS
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.12"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_0)).cmp(ether("9.68")), "should be 9.68 for PLAYER_0");
+      assert.equal(0, (await versusToken.balanceOf.call(versusStaking.address)).cmp(ether("0.32")), "should be 0.32 for versusStaking");
+
+      //  POOL_VERSUS_BNB
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.1"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_0)).cmp(ether("9.58")), "should be 9.58 for PLAYER_0");
+      assert.equal(0, (await versusToken.balanceOf.call(versusStaking.address)).cmp(ether("0.42")), "should be 0.42 for versusStaking");
+
+      //  POOL_VERSUS_BNB
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.11"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_1)).cmp(ether("9.89")), "should be 9.89 for PLAYER_1");
+      assert.equal(0, (await versusToken.balanceOf.call(versusStaking.address)).cmp(ether("0.53")), "should be 0.53 for versusStaking");
+
+      //  POOL_VERSUS_VERSUS
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.11"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(1));
+      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_1)).cmp(ether("9.78")), "should be 9.78 for PLAYER_1");
+      assert.equal(0, (await versusToken.balanceOf.call(versusStaking.address)).cmp(ether("0.64")), "should be 0.64 for versusStaking");
+    });
   })
 
   describe("calculateAvailableVersusReward", function () {
@@ -447,13 +544,13 @@ contract("VersusStaking", function (accounts) {
         from: PLAYER_0
       });
 
-      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_0)).cmp(ether("0")), "should be 0 before");
+      const PLAYER_0_beforeAmount = await versusToken.balanceOf.call(PLAYER_0);
 
       await versusStaking.withdrawAvailableReward(POOL_VERSUS_VERSUS, {
         from: PLAYER_0
       });
 
-      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_0)).cmp(availableReward), "wrong balance after");
+      assert.equal(0, (await versusToken.balanceOf.call(PLAYER_0)).cmp(PLAYER_0_beforeAmount.add(availableReward)), "wrong balance after");
     });
     
     it("should fail if No reward BNB for POOL_VERSUS_BNB", async function () {
@@ -591,6 +688,145 @@ contract("VersusStaking", function (accounts) {
       const stakeAfter = await versusStaking.getStakeOf(PLAYER_0, POOL_VERSUS_VERSUS);
       assert.isTrue((new BN(stakeAfter.timeAt)).eq(new BN("0")), "wrong timeAt after");
       assert.isTrue((new BN(stakeAfter.amount)).eq(new BN("0")), "wrong amount after");
+    });
+
+    it("should substract correct amount from versusInPool", async function () {
+      //  stake
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("1.2"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.12"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(1));
+
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.122"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(1));
+
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.32"), {
+        from: OTHER
+      });
+      await time.increase(time.duration.seconds(1));
+
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.23"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(1));
+
+
+      //  unstake
+      await versusStaking.unstake(POOL_VERSUS_VERSUS, {
+        from: PLAYER_0
+      });
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.44")), "should be 0.44");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.352")), "should be 0.352");
+
+      await versusStaking.unstake(POOL_VERSUS_BNB, {
+        from: PLAYER_1
+      });
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.44")), "should be 0.44");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.23")), "should be 0.23");
+
+      await versusStaking.unstake(POOL_VERSUS_VERSUS, {
+        from: OTHER
+      });
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0.12")), "should be 0.12");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.23")), "should be 0.23");
+
+      await versusStaking.unstake(POOL_VERSUS_VERSUS, {
+        from: PLAYER_1
+      });
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0")), "should be 0");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0.23")), "should be 0.23");
+
+      await versusStaking.unstake(POOL_VERSUS_BNB, {
+        from: PLAYER_0
+      });
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_VERSUS)).cmp(ether("0")), "should be 0");
+      assert.equal(0, (await versusStaking.versusInPool.call(POOL_VERSUS_BNB)).cmp(ether("0")), "should be 0");
+    });
+
+    it("should transfer correct VERSUS from versusStaking to sender", async function () {
+      //  stake
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("1.2"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(2));
+
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.12"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(2));
+
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.122"), {
+        from: PLAYER_1
+      });
+      await time.increase(time.duration.seconds(2));
+
+      await versusStaking.stake(POOL_VERSUS_VERSUS, ether("0.32"), {
+        from: OTHER
+      });
+      await time.increase(time.duration.seconds(2));
+
+      await versusStaking.stake(POOL_VERSUS_BNB, ether("0.23"), {
+        from: PLAYER_0
+      });
+      await time.increase(time.duration.seconds(2));
+
+
+      //  unstake
+      //  0
+      const PLAYER_0_before_0 = await versusToken.balanceOf.call(PLAYER_0);
+      const PLAYER_0_reward_0 = await versusStaking.calculateAvailableVersusReward.call(POOL_VERSUS_VERSUS, {
+        from: PLAYER_0
+      });
+      await versusStaking.unstake(POOL_VERSUS_VERSUS, {
+        from: PLAYER_0
+      });
+      const PLAYER_0_after_0 = await versusToken.balanceOf.call(PLAYER_0);
+      assert.equal(0, PLAYER_0_after_0.cmp(PLAYER_0_before_0.add(PLAYER_0_reward_0).add(ether("1.2"))), "wrong for PLAYER_0_after_0");
+
+      //  1
+      const PLAYER_1_before_1 = await versusToken.balanceOf.call(PLAYER_1);
+      await versusStaking.unstake(POOL_VERSUS_BNB, {
+        from: PLAYER_1
+      });
+      const PLAYER_1_after_1 = await versusToken.balanceOf.call(PLAYER_1);
+      assert.equal(0, PLAYER_1_after_1.cmp(PLAYER_1_before_1.add(ether("0.122"))), "wrong for PLAYER_1_after_1");
+
+      //  2
+      const OTHER_before_2 = await versusToken.balanceOf.call(OTHER);
+      const OTHER_reward_2 = await versusStaking.calculateAvailableVersusReward.call(POOL_VERSUS_VERSUS, {
+        from: OTHER
+      });
+      await versusStaking.unstake(POOL_VERSUS_VERSUS, {
+        from: OTHER
+      });
+      const OTHER_after_2 = await versusToken.balanceOf.call(OTHER);
+      assert.equal(0, OTHER_after_2.cmp(OTHER_before_2.add(OTHER_reward_2).add(ether("0.32"))), "wrong for OTHER_after_2");
+
+      //  3
+      const PLAYER_1_before_3 = await versusToken.balanceOf.call(PLAYER_1);
+      const PLAYER_1_reward_3 = await versusStaking.calculateAvailableVersusReward.call(POOL_VERSUS_VERSUS, {
+        from: PLAYER_1
+      });
+      await versusStaking.unstake(POOL_VERSUS_VERSUS, {
+        from: PLAYER_1
+      });
+      const PLAYER_1_after_3 = await versusToken.balanceOf.call(PLAYER_1);
+      assert.equal(0, PLAYER_1_after_3.cmp(PLAYER_1_before_3.add(PLAYER_1_reward_3).add(ether("0.12"))), "wrong for PLAYER_1_after_3");
+
+      //  4
+      const PLAYER_0_before_4 = await versusToken.balanceOf.call(PLAYER_0);
+      await versusStaking.unstake(POOL_VERSUS_BNB, {
+        from: PLAYER_0
+      });
+      const PLAYER_0_after_4 = await versusToken.balanceOf.call(PLAYER_0);
+      assert.equal(0, PLAYER_0_after_4.cmp(PLAYER_0_before_4.add(ether("0.23"))), "wrong for PLAYER_0_after_4");
     });
   });
 });
