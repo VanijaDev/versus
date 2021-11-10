@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -22,6 +22,7 @@ contract VersusStaking is Ownable, Pausable {
 
   address public versusToken;
 
+  mapping(Pool => uint256) public versusInPool;
   mapping(Pool => uint256) public minStake;
   mapping(Pool => uint256) public apy;
   mapping(address => mapping(Pool => Stake)) private stakeOf;
@@ -45,8 +46,8 @@ contract VersusStaking is Ownable, Pausable {
   constructor(address _versusToken) {
     versusToken = _versusToken;
 
-    minStake[Pool.versus_versus] = 0x16345785D8A0000; //  0.1 BNB
-    minStake[Pool.versus_bnb] = 0x16345785D8A0000; //  0.1 BNB
+    minStake[Pool.versus_versus] = 0x16345785D8A0000; //  0.1 VERSUS
+    minStake[Pool.versus_bnb] = 0x16345785D8A0000; //  0.1 VERSUS
 
     apy[Pool.versus_versus] = 300;
     apy[Pool.versus_bnb] = 100;
@@ -109,6 +110,9 @@ contract VersusStaking is Ownable, Pausable {
     _updateSavedVersusReward(_pool);
     stakeOf[msg.sender][_pool].timeAt = block.timestamp;
     stakeOf[msg.sender][_pool].amount += _amount;
+    versusInPool[_pool] += _amount;
+
+    IERC20(versusToken).transferFrom(msg.sender, address(this), _amount);
   }
 
   /***
@@ -134,7 +138,7 @@ contract VersusStaking is Ownable, Pausable {
 
     uint256 timeSinceStake = block.timestamp - stakeOf[msg.sender][_pool].timeAt;
     uint256 percentagePerSec = (apy[_pool] * 1 ether) / SECONDS_IN_YEAR;
-    uint256 amount = ((stakeOf[msg.sender][_pool].amount * percentagePerSec) * timeSinceStake) / 1 ether;   //  ((2*10^18 * 9512937595129) * 12345) / 10^18 = 23487442922373501 wei == 0.23487442922373501 BNB
+    uint256 amount = ((stakeOf[msg.sender][_pool].amount * percentagePerSec) * timeSinceStake) / 1 ether;   //  ((2*10^18 * 9512937595129) * 12345) / 10^18 = 23487442922373501 wei == 0.23487442922373501 VERSUS
     return amount;
   }
 
@@ -166,7 +170,7 @@ contract VersusStaking is Ownable, Pausable {
    * @return BNB amount.
    */
   function _convertVersusToBnb(uint256 _amount) private view returns(uint256) {
-    //  TODO: get BNB from PriceFeed
+    //  TODO: get BNB from PriceFeed. WIll not be direct pair.
     return 200000 gwei;
   }
 
@@ -201,7 +205,13 @@ contract VersusStaking is Ownable, Pausable {
     require(reward > 0, "No reward");
 
     withdrawAvailableReward(_pool);
+
+    uint256 versusStake = stakeOf[msg.sender][_pool].amount;
     delete stakeOf[msg.sender][_pool];
+
+    versusInPool[_pool] -= versusStake;
+
+    IERC20(versusToken).transfer(msg.sender, versusStake);
   }
 
   /**
