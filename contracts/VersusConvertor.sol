@@ -39,11 +39,10 @@ contract VersusConvertor {
    */
   function getTokenPrice_Versus_BUSD(address _pairAddress, uint _amount) public view returns(uint) {
     IUniswapV2Pair pair = IUniswapV2Pair(_pairAddress);
-    IERC20Metadata token0 = IERC20Metadata(pair.token0());
     (uint Res0, uint Res1,) = pair.getReserves();
 
-    uint res1 = Res1 * (10**token0.decimals());
-    return((_amount * res1) / Res0); // return amount of token0 needed to buy token1
+    uint res1 = Res1;
+    return (((_amount * res1) / Res0)); // return amount of token0 needed to buy token1
    }
 
    /**
@@ -53,10 +52,9 @@ contract VersusConvertor {
    */
   function getTokenPrice_BUSD_BNB(address _pairAddress, uint _amount) public view returns(uint) {
     IUniswapV2Pair pair = IUniswapV2Pair(_pairAddress);
-    IERC20Metadata token1 = IERC20Metadata(pair.token1());
     (uint Res0, uint Res1,) = pair.getReserves();
 
-    uint res0 = Res0 * (10**token1.decimals());
+    uint res0 = Res0;
     return((_amount * res0) / Res1); // return amount of token0 needed to buy token1
    }
 }
