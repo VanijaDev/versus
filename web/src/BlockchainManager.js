@@ -198,6 +198,7 @@ export class BlockchainManager {
 
   //  Staking
   async updateStakingUI() {
+    this.checkAllowance();
     this.updateBalanceVersus();
     this.updateStakingPoolBalanceBNB();
     this.updateStakingPoolBalanceVersus();
@@ -206,6 +207,21 @@ export class BlockchainManager {
     this.updateAPY();
     this.updateMyStake();
     this.updateAvailableReward();
+  }
+
+  async checkAllowance() {
+    const allowance = await this.versusToken.methods.allowance(this.userAccount, this.versusStaking._address).call();
+    if (parseInt(allowance) == parseInt(0)) {
+      document.getElementById("btn_approve_versus_versus").style.display = "block"
+      document.getElementById("btn_approve_versus_bnb").style.display = "block"
+      document.getElementById("btn_stake_versus_versus").style.display = "none"
+      document.getElementById("btn_stake_versus_bnb").style.display = "none"
+    } else {
+      document.getElementById("btn_approve_versus_versus").style.display = "none"
+      document.getElementById("btn_approve_versus_bnb").style.display = "none"
+      document.getElementById("btn_stake_versus_versus").style.display = "block"
+      document.getElementById("btn_stake_versus_bnb").style.display = "block"
+    }
   }
   
   async updateBalanceVersus() {
@@ -412,6 +428,32 @@ export class BlockchainManager {
     console.log(`checkEpoch: ${checkEpoch}`);
     const poolWinner = (await this.versusVoting.methods.epochResult(checkEpoch).call()).poolWinner;
     console.log(`poolWinner : ${poolWinner}`);
+  }
+
+  async approve() {
+    const MAX_INT = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+
+    this.versusToken.methods.approve(this.versusStaking._address, MAX_INT).send({
+      from: this.userAccount
+    })
+    .on('transactionHash', function(hash){
+      console.log(`tx sent, hash: ${hash}`);
+    })
+    .on('confirmation', function(confirmationNumber, receipt){
+        //  needed?
+    })
+    .on('receipt', function(receipt){
+      console.log(`tx SUCCESS, hash: ${receipt.transactionHash}`);
+
+      thisLocal.updateStakingUI();
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.error(`tx FAILED, error: ${error}, receipt: ${receipt}`);
+
+      if (error.code == 4001) {
+        alert("User denied tx.");
+      }
+    });
   }
 
   async makeStake(_pool) {

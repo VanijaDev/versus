@@ -16,6 +16,10 @@ export default class Index {
     this.bm.makeVote(_pool);
   }
 
+  async approve() {
+    this.bm.approve();
+  }
+
   async makeStake(_pool) {
     this.bm.makeStake(_pool);
   }

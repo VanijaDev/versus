@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./VersusConvertor.sol";
 
 contract VersusStaking is Ownable, Pausable {
 
@@ -21,6 +21,7 @@ contract VersusStaking is Ownable, Pausable {
   uint256 constant SECONDS_IN_YEAR = 31536000;
 
   address public versusToken;
+  address public versusConvertor;
 
   mapping(Pool => uint256) public versusInPool;
   mapping(Pool => uint256) public minStake;
@@ -42,9 +43,11 @@ contract VersusStaking is Ownable, Pausable {
   /***
    * @dev Constructor.
    * @param _versusToken VersusToken address.
+   * @param _versusConvertor VersusConvertor address. VersusConvertor Smart Contract can be updated later in case of any changes of swap logic.
    */
-  constructor(address _versusToken) {
+  constructor(address _versusToken, address _versusConvertor) {
     versusToken = _versusToken;
+    versusConvertor = _versusConvertor;
 
     minStake[Pool.versus_versus] = 0x16345785D8A0000; //  0.1 VERSUS
     minStake[Pool.versus_bnb] = 0x16345785D8A0000; //  0.1 VERSUS
@@ -115,6 +118,15 @@ contract VersusStaking is Ownable, Pausable {
     IERC20(versusToken).transferFrom(msg.sender, address(this), _amount);
   }
 
+  /**
+   * @dev Updates versusConvertor address.
+   * @notice Use ZERO_ADDRESS if BNB rewards should be disabled.
+   * @param _versusConvertor VersusConvertor address.
+   */
+  function updateConvertor(address _versusConvertor) external onlyOwner {
+    versusConvertor = _versusConvertor;
+  }
+
   /***
    * @dev Calculates pending VERSUS reward to date and saves it.
    * @param _pool Pool id.
@@ -170,8 +182,9 @@ contract VersusStaking is Ownable, Pausable {
    * @return BNB amount.
    */
   function _convertVersusToBnb(uint256 _amount) private view returns(uint256) {
-    //  TODO: get BNB from PriceFeed. WIll not be direct pair.
-    return 200000 gwei;
+    require(versusConvertor != address(0), "No versusConvertor");
+    
+    return VersusConvertor(versusConvertor).convertVersusToBnb(_amount);
   }
 
   /***
