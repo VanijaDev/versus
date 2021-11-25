@@ -441,7 +441,6 @@ contract("VersusStaking", function (accounts) {
 
       //  pending
       assert.equal(0, availableReward.sub(saved_0).cmp(pending_0), "wrong pending amount");
-
     });
   });
 
@@ -523,7 +522,6 @@ contract("VersusStaking", function (accounts) {
       assert.isTrue((await versusStaking.calculateAvailableVersusReward(POOL_VERSUS_VERSUS, {
         from: PLAYER_0
       })).eq(new BN("0")), "pending should be == 0");
-     
     });
     
     it("should transfer correct VERSUS amount", async function () {
