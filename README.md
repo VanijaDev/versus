@@ -20,3 +20,4 @@
 4. distribute VersusAccessToken amoung users using ```mint(uint256 _amount,  address _receiver)```
 ```_amount``` - VersusAccessToken amount
 ```_receiver```- receiver address
+5. approve VersusStakingAccess for VersusToken
