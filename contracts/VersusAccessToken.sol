@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IVersusStakingAccess.sol";
 
-contract VersusAccessToken is ERC20("Versus Access", "aVERSUS"), Ownable {
+contract VersusAccessToken is ERC20("Versus Pro", "VERSUSPRO"), Ownable {
 
   uint256 public constant MAX_SUPPLY = 0xC8;  // 200
 

@@ -36,11 +36,11 @@ contract("VersusAccessToken", function (accounts) {
   
   describe("Constructor", function () {
     it("should be correct name", async function () {
-      assert.equal(await versusAccessToken.name(), "Versus Access", "wrong name");
+      assert.equal(await versusAccessToken.name(), "Versus Pro", "wrong name");
     });
 
     it("should be correct symbol", async function () {
-      assert.equal(await versusAccessToken.symbol(), "aVERSUS", "wrong symbol");
+      assert.equal(await versusAccessToken.symbol(), "VERSUSPRO", "wrong symbol");
     });
 
     it("should set correct owner", async function () {
