@@ -153,7 +153,7 @@ contract InvestorTyped is Ownable {
 
     require(_startIdx < investorsBase.length, "_startIdx out");
     require(_stopIdx < investorsBase.length, "_stopIdx out");
-    require(_startIdx < _stopIdx, "indexes equal");
+    require(_startIdx <= _stopIdx, "wrong indexes");
 
     uint256 length = _stopIdx - _startIdx + 1;
     address[] memory arr = new address[](length);
@@ -179,7 +179,7 @@ contract InvestorTyped is Ownable {
 
     require(_startIdx < investorsPro.length, "_startIdx out");
     require(_stopIdx < investorsPro.length, "_stopIdx out");
-    require(_startIdx < _stopIdx, "indexes equal");
+    require(_startIdx <= _stopIdx, "wrong indexes");
 
     uint256 length = _stopIdx - _startIdx + 1;
     address[] memory arr = new address[](length);
@@ -205,7 +205,7 @@ contract InvestorTyped is Ownable {
 
     require(_startIdx < investorsPriority.length, "_startIdx out");
     require(_stopIdx < investorsPriority.length, "_stopIdx out");
-    require(_startIdx < _stopIdx, "indexes equal");
+    require(_startIdx <= _stopIdx, "wrong indexes");
 
     uint256 length = _stopIdx - _startIdx + 1;
     address[] memory arr = new address[](length);
