@@ -262,7 +262,7 @@ contract InvestorTyped is Ownable {
    * @param _address Address to check.
    * @return Investor type name.
    */
-  function typeOfInvestorFor(address _address) external view returns (string memory) {
+  function typeNameOfInvestorFor(address _address) external view returns (string memory) {
     if (isInvestorBase(_address)) {
       return "Base";
     }
