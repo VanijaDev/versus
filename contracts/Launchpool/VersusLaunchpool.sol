@@ -2,11 +2,13 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Cappable.sol";
 import "./SaleRounds.sol";
 import "./StakeRequired.sol";
+import "./InvestorTyped.sol";
 
-contract VersusLaunchpool is Pausable, Cappable, SaleRounds, StakeRequired {
+contract VersusLaunchpool is Pausable, Cappable, SaleRounds, StakeRequired, InvestorTyped {
   address public depositToken;
   uint256 public depositsTotal;
   
@@ -40,10 +42,23 @@ contract VersusLaunchpool is Pausable, Cappable, SaleRounds, StakeRequired {
    * @dev Makes deposit.
    */
   function deposit() external whenNotPaused {
-    //  require(depositsTotal + 111 <= maxCap, "Cap reached");
-    //  check _isPublicSale_
+    uint256 allocation = allocationInvestorBase;
+    if (!isPublicSale) {
+      allocation = allocationFor(msg.sender);
+      require(allocation > 0, "not allowed investor");
 
+      if (isInvestorBase(msg.sender)) {
+        require(isStakeRequiredMadeFor(msg.sender), "pool stake required");
+      }
+    }
+    
+    require(depositOf[msg.sender] == 0, "deposit made");
+    require(IERC20(depositToken).balanceOf(msg.sender) >= allocation, "not enough balance");
+    require((depositsTotal + allocation) <= maxCap, "Max cap reached");
 
+    IERC20(depositToken).transferFrom(msg.sender, address(this), allocation);
+
+    depositsTotal += allocation;
+    depositOf[msg.sender] = allocation;
   }
-
 }
