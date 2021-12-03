@@ -10,10 +10,6 @@ contract InvestorTyped is Ownable {
     Priority
   }
 
-  uint256 public allocationInvestorBase;  //  single amount for all investors.
-  uint256 public allocationInvestorPro;  //  single amount for all investors.
-  mapping(address => uint256) public allocationInvestorPriorityOf;  //  custom amount for each investor.
-
   address[] private investorsBase;
   address[] private investorsPro;
   address[] private investorsPriority;
@@ -21,6 +17,10 @@ contract InvestorTyped is Ownable {
   mapping(address => uint256) private investorBaseIndexOf;
   mapping(address => uint256) private investorProIndexOf;
   mapping(address => uint256) private investorPriorityIndexOf;
+
+  uint256 public allocationInvestorBase;  //  single amount for all investors.
+  uint256 public allocationInvestorPro;  //  single amount for all investors.
+  mapping(address => uint256) public allocationInvestorPriorityOf;  //  custom amount for each investor.
 
 
   /**
@@ -133,10 +133,8 @@ contract InvestorTyped is Ownable {
       }
       investorsPriority.pop();
       
-      delete allocationInvestorPriorityOf[_address];
       delete investorPriorityIndexOf[_address];
-
-      // investorsPriority.push(_address);
+      delete allocationInvestorPriorityOf[_address];
     }
   }
 
