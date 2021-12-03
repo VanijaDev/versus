@@ -140,6 +140,31 @@ contract InvestorTyped is Ownable {
 
 
   /**
+   * OTHER
+   */
+
+  /**
+   * @dev Gets allocation for address.
+   * @param _address Investor address.
+   * @return Allocation amount.
+   */
+  function allocationFor(address _address) public view returns (uint256) {
+    if (isInvestorBase(_address)) {
+      return allocationInvestorBase;
+    }
+
+    if (isInvestorPro(_address)) {
+      return allocationInvestorPro;
+    }
+
+    if (isInvestorPriority(_address)) {
+      return allocationInvestorPriorityOf[_address];
+    }
+
+    return 0;
+  }
+
+  /**
    * @notice Use both _startIdx & _stopIdx equal to 0 if all investors are required.
    * @dev Gets investors array for type Base.
    * @param _startIdx Index to start in investorsBase.
