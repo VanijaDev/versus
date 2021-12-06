@@ -172,22 +172,7 @@ contract InvestorTyped is Ownable {
    * @return Array of investors.
    */
   function getInvestorsBase(uint256 _startIdx, uint256 _stopIdx) external view returns (address[] memory) {
-    if (_startIdx == 0 && _stopIdx == 0) {
-      return investorsBase;
-    }
-
-    require(_startIdx < investorsBase.length, "_startIdx out");
-    require(_stopIdx < investorsBase.length, "_stopIdx out");
-    require(_startIdx <= _stopIdx, "wrong indexes");
-
-    uint256 length = _stopIdx - _startIdx + 1;
-    address[] memory arr = new address[](length);
-
-    for (uint256 i = _startIdx; i <= _stopIdx; i++) {
-      arr[i] = investorsBase[i];
-    }
-
-    return arr;
+    return getInvestors(InvestorType.Base, _startIdx, _stopIdx);
   }
 
   /**
@@ -198,22 +183,7 @@ contract InvestorTyped is Ownable {
    * @return Array of investors.
    */
   function getInvestorsPro(uint256 _startIdx, uint256 _stopIdx) external view returns (address[] memory) {
-    if (_startIdx == 0 && _stopIdx == 0) {
-      return investorsPro;
-    }
-
-    require(_startIdx < investorsPro.length, "_startIdx out");
-    require(_stopIdx < investorsPro.length, "_stopIdx out");
-    require(_startIdx <= _stopIdx, "wrong indexes");
-
-    uint256 length = _stopIdx - _startIdx + 1;
-    address[] memory arr = new address[](length);
-
-    for (uint256 i = _startIdx; i <= _stopIdx; i++) {
-      arr[i] = investorsPro[i];
-    }
-
-    return arr;
+    return getInvestors(InvestorType.Pro, _startIdx, _stopIdx);
   }
 
   /**
@@ -224,19 +194,41 @@ contract InvestorTyped is Ownable {
    * @return Array of investors.
    */
   function getInvestorsPriority(uint256 _startIdx, uint256 _stopIdx) external view returns (address[] memory) {
-    if (_startIdx == 0 && _stopIdx == 0) {
-      return investorsPriority;
+    return getInvestors(InvestorType.Priority, _startIdx, _stopIdx);
+  }
+
+  /**
+   * @notice Use both _startIdx & _stopIdx equal to 0 if all investors are required.
+   * @dev Gets investors array.
+   * @param _type Type if investors to get.
+   * @param _startIdx Index to start in investorsPriority.
+   * @param _stopIdx Index to stop in investorsPriority.
+   * @return Array of investors.
+   */
+  function getInvestors(InvestorType _type, uint256 _startIdx, uint256 _stopIdx) private view returns (address[] memory) {
+    //  check type
+    address[] storage investorsArr = investorsBase;
+    if (_type == InvestorType.Pro) {
+      investorsArr = investorsPro;
+    } else if (_type == InvestorType.Priority) {
+      investorsArr = investorsPriority;
     }
 
-    require(_startIdx < investorsPriority.length, "_startIdx out");
-    require(_stopIdx < investorsPriority.length, "_stopIdx out");
+    //  return all
+    if (_startIdx == 0 && _stopIdx == 0) {
+      return investorsArr;
+    }
+
+    //  return by indexes
+    require(_startIdx < investorsArr.length, "_startIdx out");
+    require(_stopIdx < investorsArr.length, "_stopIdx out");
     require(_startIdx <= _stopIdx, "wrong indexes");
 
     uint256 length = _stopIdx - _startIdx + 1;
     address[] memory arr = new address[](length);
 
     for (uint256 i = _startIdx; i <= _stopIdx; i++) {
-      arr[i] = investorsPriority[i];
+      arr[i] = investorsArr[i];
     }
 
     return arr;
