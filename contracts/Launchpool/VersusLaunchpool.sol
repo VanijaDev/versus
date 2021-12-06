@@ -61,4 +61,12 @@ contract VersusLaunchpool is Pausable, Cappable, SaleRounds, StakeRequired, Inve
     depositsTotal += allocation;
     depositOf[msg.sender] = allocation;
   }
+
+   /**
+    * @dev Withdraws all deposits.
+    * @param _receiver Receiver address.
+    */
+  function withdrawAllDeposits(address _receiver) external onlyOwner {
+    IERC20(depositToken).transfer(_receiver, depositsTotal);
+  }
 }
