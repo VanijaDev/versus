@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "../interfaces/ILaunchpoolStaking.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract StakeRequired is Ownable {
@@ -39,7 +40,6 @@ contract StakeRequired is Ownable {
    * @return Whether required stake is made or not.
    */
   function isStakeRequiredMadeFor(address _address) public view returns (bool) {
-    // TODO: check if stake is made
-    return true;
+    return (ILaunchpoolStaking(stakingPool).getStakeOf(_address) >= stakeRequired);
   }
 }
