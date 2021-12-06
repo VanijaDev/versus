@@ -15,6 +15,8 @@ contract SaleRounds is Ownable {
    * @param _enable Whether enable or disable public sale.
    */
   function enablePublicSale(bool _enable) external onlyOwner {
+    (_enable) ? require(!isPublicSale, "Is public") : require(isPublicSale, "Is private");
+    
     isPublicSale = _enable;
   }
 }
