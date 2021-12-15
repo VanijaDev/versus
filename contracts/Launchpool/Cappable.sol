@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 contract Cappable {
   uint256 public maxCap;
 
-  /**
+  /***
    * @dev Constructor.
    * @param _maxCap Max cap amount.
    */
@@ -12,7 +12,7 @@ contract Cappable {
     maxCap = _maxCap;
   }
 
-  /**
+  /***
    * @dev Updates maxCap.
    * @param _maxCap Max cap amount to be used.
    */

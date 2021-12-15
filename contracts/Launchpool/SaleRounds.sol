@@ -10,7 +10,7 @@ contract SaleRounds is Ownable {
   bool public isPublicSale;
 
 
-  /**
+  /***
    * @dev Toggles between private / public sale round.
    * @param _enable Whether enable or disable public sale.
    */

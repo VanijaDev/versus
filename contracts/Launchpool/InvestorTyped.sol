@@ -14,20 +14,29 @@ contract InvestorTyped is Ownable {
   address[] private investorsPro;
   address[] private investorsPriority;
 
-  mapping(address => uint256) private investorBaseIndexOf;
-  mapping(address => uint256) private investorProIndexOf;
-  mapping(address => uint256) private investorPriorityIndexOf;
+  mapping(address => uint256) public investorBaseIndexOf;
+  mapping(address => uint256) public investorProIndexOf;
+  mapping(address => uint256) public investorPriorityIndexOf;
 
-  uint256 public allocationInvestorBase;  //  single amount for all investors.
-  uint256 public allocationInvestorPro;  //  single amount for all investors.
+  uint256 public allocationInvestorBase;                            //  single amount for all investors.
+  uint256 public allocationInvestorPro;                             //  single amount for all investors.
   mapping(address => uint256) public allocationInvestorPriorityOf;  //  custom amount for each investor.
 
+  /***
+   * @dev Constructor.
+   * @param _allocationInvestorBase Allocation amount for Base investors.
+   * @param _allocationInvestorPro Allocation amount for Pro investors.
+   */
+  constructor(uint256 _allocationInvestorBase, uint256 _allocationInvestorPro) {
+    allocationInvestorBase = _allocationInvestorBase;
+    allocationInvestorPro = _allocationInvestorPro;
+  }
 
   /**
    * ADD INVESTORS
    */
 
-  /**
+  /***
    * @dev Adds investors to investorsBase.
    * @param _addresses Investor addresses.
    */
@@ -40,7 +49,7 @@ contract InvestorTyped is Ownable {
     }
   }
 
-  /**
+  /***
    * @dev Adds investors to investorsPro.
    * @param _addresses Investor addresses.
    */
@@ -53,7 +62,7 @@ contract InvestorTyped is Ownable {
     }
   }
 
-  /**
+  /***
    * @notice Each investor is being added separately.
    * @dev Adds investor to investorsPriority.
    * @param _address Investor address.
@@ -72,7 +81,7 @@ contract InvestorTyped is Ownable {
    * REMOVE INVESTORS
    */
 
-  /**
+  /***
    * @dev Removes investor from investorsBase.
    * @param _address Investor address.
    */
@@ -80,7 +89,7 @@ contract InvestorTyped is Ownable {
     removeInvestor(InvestorType.Base, _address);
   }
   
-  /**
+  /***
    * @dev Removes investor from investorsPro.
    * @param _address Investor address.
    */
@@ -88,7 +97,7 @@ contract InvestorTyped is Ownable {
     removeInvestor(InvestorType.Pro, _address);
   }
 
-  /**
+  /***
    * @dev Removes investor from investorsPriority.
    * @param _address Investor address.
    */
@@ -96,7 +105,7 @@ contract InvestorTyped is Ownable {
     removeInvestor(InvestorType.Priority, _address);
   }
 
-  /**
+  /***
    * @dev Removes investor.
    * @param _type Investor type.
    * @param _address Investor address.
@@ -108,6 +117,7 @@ contract InvestorTyped is Ownable {
       uint256 removeIdx = investorBaseIndexOf[_address];
       if (removeIdx < (investorsBase.length - 1)) {
         investorsBase[removeIdx] = investorsBase[investorsBase.length - 1];
+        investorBaseIndexOf[investorsBase[investorsBase.length - 1]] = removeIdx;
       }
       investorsBase.pop();
       
@@ -118,7 +128,8 @@ contract InvestorTyped is Ownable {
 
       uint256 removeIdx = investorProIndexOf[_address];
       if (removeIdx < (investorsPro.length - 1)) {
-        investorsPro[removeIdx] = investorsPro[investorsBase.length - 1];
+        investorsPro[removeIdx] = investorsPro[investorsPro.length - 1];
+        investorProIndexOf[investorsPro[investorsPro.length - 1]] = removeIdx;
       }
       investorsPro.pop();
 
@@ -129,7 +140,8 @@ contract InvestorTyped is Ownable {
 
       uint256 removeIdx = investorPriorityIndexOf[_address];
       if (removeIdx < (investorsPriority.length - 1)) {
-        investorsPriority[removeIdx] = investorsPriority[investorsBase.length - 1];
+        investorsPriority[removeIdx] = investorsPriority[investorsPriority.length - 1];
+        investorPriorityIndexOf[investorsPriority[investorsPriority.length - 1]] = removeIdx;
       }
       investorsPriority.pop();
       
@@ -143,7 +155,7 @@ contract InvestorTyped is Ownable {
    * OTHER
    */
 
-  /**
+  /***
    * @dev Gets allocation for address.
    * @param _address Investor address.
    * @return Allocation amount.
@@ -164,7 +176,23 @@ contract InvestorTyped is Ownable {
     return 0;
   }
 
-  /**
+  /***
+   * @dev Updates allocation for Base investors.
+   * @param _allocation Allocation amount.
+   */
+  function updateAllocationForBase(uint256 _allocation) external onlyOwner {
+    allocationInvestorBase = _allocation;
+  }
+
+  /***
+   * @dev Updates allocation for Pro investors.
+   * @param _allocation Allocation amount.
+   */
+  function updateAllocationForPro(uint256 _allocation) external onlyOwner {
+    allocationInvestorPro = _allocation;
+  }
+
+  /***
    * @notice Use both _startIdx & _stopIdx equal to 0 if all investors are required.
    * @dev Gets investors array for type Base.
    * @param _startIdx Index to start in investorsBase.
@@ -175,7 +203,7 @@ contract InvestorTyped is Ownable {
     return getInvestors(InvestorType.Base, _startIdx, _stopIdx);
   }
 
-  /**
+  /***
    * @notice Use both _startIdx & _stopIdx equal to 0 if all investors are required.
    * @dev Gets investors array for type Pro.
    * @param _startIdx Index to start in investorsBase.
@@ -186,7 +214,7 @@ contract InvestorTyped is Ownable {
     return getInvestors(InvestorType.Pro, _startIdx, _stopIdx);
   }
 
-  /**
+  /***
    * @notice Use both _startIdx & _stopIdx equal to 0 if all investors are required.
    * @dev Gets investors array for type Priority.
    * @param _startIdx Index to start in investorsPriority.
@@ -197,7 +225,7 @@ contract InvestorTyped is Ownable {
     return getInvestors(InvestorType.Priority, _startIdx, _stopIdx);
   }
 
-  /**
+  /***
    * @notice Use both _startIdx & _stopIdx equal to 0 if all investors are required.
    * @dev Gets investors array.
    * @param _type Type if investors to get.
@@ -226,20 +254,26 @@ contract InvestorTyped is Ownable {
 
     uint256 length = _stopIdx - _startIdx + 1;
     address[] memory arr = new address[](length);
+    uint256 arrIdx;
 
     for (uint256 i = _startIdx; i <= _stopIdx; i++) {
-      arr[i] = investorsArr[i];
+      arr[arrIdx] = investorsArr[i];
+      arrIdx ++;
     }
 
     return arr;
   }
 
-  /**
+  /***
    * @dev Checks wheter address is investor Base.
    * @param _address Address to check.
    * @return Wheter address is investor Base or not.
    */
   function isInvestorBase(address _address) public view returns (bool) {
+    if (investorsBase.length == 0) {
+      return false;
+    }
+
     return investorsBase[investorBaseIndexOf[_address]] == _address;
   }
 
@@ -249,19 +283,23 @@ contract InvestorTyped is Ownable {
    * @return Wheter address is investor Pro or not.
    */
   function isInvestorPro(address _address) public view returns (bool) {
+    if (investorsPro.length == 0) {
+      return false;
+    }
+
     return investorsPro[investorProIndexOf[_address]] == _address;
   }
 
-  /**
+  /***
    * @dev Checks wheter address is investor Priority.
    * @param _address Address to check.
    * @return Wheter address is investor Priority or not.
    */
   function isInvestorPriority(address _address) public view returns (bool) {
-    return investorsPriority[investorPriorityIndexOf[_address]] == _address;
+    return allocationInvestorPriorityOf[_address] > 0;
   }
 
-  /**
+  /***
    * @dev Checks wheter address is investor of any type.
    * @param _address Address to check.
    * @return Wheter address is investor of any type or not.
@@ -274,7 +312,7 @@ contract InvestorTyped is Ownable {
      return false;
    }
 
-  /**
+  /***
    * @dev Gets type name of investor. Empty string is returned is not investor.
    * @param _address Address to check.
    * @return Investor type name.
