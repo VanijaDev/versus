@@ -41,7 +41,7 @@ contract LaunchpoolStaking is Ownable, Pausable {
     lockPeriod = _lockPeriod;
     stakeRequired = _stakeRequired;
     
-    apy = 0x1F4;  //  500
+    apy = 0xFA;  //  250
   }
 
   /***
