@@ -20,10 +20,11 @@ contract LaunchpoolStaking is Ownable, Pausable {
   address public versusToken;
   uint256 public lockPeriod;
 
-  uint256 public immutable stakeRequired;
+  uint256 public stakeRequired; //  stake amount required to be made
   uint256 public apy;
 
   mapping(address => Stake) public stakeOf;
+  mapping(address => uint256) public stakeRequiredOf; //  stake made by address
 
   event StakeMade(address indexed _from);
   event UnstakeMade(address indexed _from);
@@ -53,6 +54,14 @@ contract LaunchpoolStaking is Ownable, Pausable {
   }
 
   /***
+   * @dev Updates APY.
+   * @param _stakeRequired Stake amount to be updated to.
+   */
+  function updateStakeRequired(uint256 _stakeRequired) external onlyOwner {
+    stakeRequired = _stakeRequired;
+  }
+
+  /***
    * @dev Updates lockPeriod in seconds.
    * @param _lockPeriod Lock period in seconds.
    */
@@ -76,6 +85,7 @@ contract LaunchpoolStaking is Ownable, Pausable {
     require(IERC20(versusToken).transferFrom(msg.sender, address(this), stakeRequired), "Transfer failed");
 
     stakeOf[msg.sender] = Stake(block.timestamp, block.timestamp + lockPeriod);
+    stakeRequiredOf[msg.sender] = stakeRequired;
 
     emit StakeMade(msg.sender);
   }
@@ -101,7 +111,7 @@ contract LaunchpoolStaking is Ownable, Pausable {
     }
     
     uint256 percentagePerSec = (apy * 1 ether) / SECONDS_IN_YEAR;
-    uint256 amount = ((stakeRequired * percentagePerSec) * rewardPeriod) / 100 ether;   //  ((2*10^18 * 9512937595129) * 12345) / (100 * 10^18) = 2348744292237350 wei == 0.2348744292237350 VERSUS. 100 ether = 1 ether & 100%
+    uint256 amount = ((stakeRequiredOf[msg.sender] * percentagePerSec) * rewardPeriod) / 100 ether;   //  ((2*10^18 * 9512937595129) * 12345) / (100 * 10^18) = 2348744292237350 wei == 0.2348744292237350 VERSUS. 100 ether = 1 ether & 100%
     return amount;
   }
 
@@ -119,7 +129,7 @@ contract LaunchpoolStaking is Ownable, Pausable {
     emit RewardWithdrawn(msg.sender, versusReward);
   }
 
-  /***
+  /**
    * @dev Makes unstake.
    */
   function unstake() external whenNotPaused {
@@ -131,7 +141,7 @@ contract LaunchpoolStaking is Ownable, Pausable {
     }
     delete stakeOf[msg.sender];
 
-    IERC20(versusToken).transfer(msg.sender, stakeRequired);
+    IERC20(versusToken).transfer(msg.sender, stakeRequiredOf[msg.sender]);
     
     emit UnstakeMade(msg.sender);
   }
