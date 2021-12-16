@@ -42,4 +42,4 @@
 ```_stakingPool``` - Staking pool address to check stakes
 ```_allocationInvestorBase``` - Allocation amount for Base investors
 ```_allocationInvestorPro``` - Allocation amount for Pro investors
-2. users must approve VersusLaunchpool for VersusToken
+2. users must approve VersusLaunchpool for _depositToken
