@@ -10,6 +10,7 @@
 ```spender``` - VersusVoting address
 ```amount``` - max int or very big number
 
+
 ## Deployment flow (VersusAccessToken, VersusStakingAccess)
 1. deploy VersusAccessToken() Smart Contract
 2. deploy VersusStakingAccess(address _versusToken, address _versusAccessToken) Smart Contract
@@ -21,3 +22,22 @@
 ```_amount``` - VersusAccessToken amount
 ```_receiver```- receiver address
 5. approve VersusStakingAccess for VersusToken
+
+
+## Deployment flow (LaunchpoolStaking)
+1. deploy LaunchpoolStaking(address _versusToken, uint256 _lockPeriod, uint256 _stakeRequired) Smart Contract
+```_versusToken``` - VersusToken address
+```_lockPeriod``` - lock period
+```_stakeRequired``` - stake amount
+2. OWNER must approve LaunchpoolStaking for VersusToken
+3. users must approve LaunchpoolStaking for VersusToken
+
+
+## Deployment flow (VersusLaunchpool)
+1. deploy VersusLaunchpool(address _depositToken, uint256 _maxCap, address _stakingPool, uint256 _allocationInvestorBase, uint256 _allocationInvestorPro) Smart Contract
+```_depositToken``` - Token used for deposit
+```_maxCap``` - Max cap amount
+```_stakingPool``` - Staking pool address to check stakes
+```_allocationInvestorBase``` - Allocation amount for Base investors
+```_allocationInvestorPro``` - Allocation amount for Pro investors
+2. users must approve VersusLaunchpool for VersusToken
