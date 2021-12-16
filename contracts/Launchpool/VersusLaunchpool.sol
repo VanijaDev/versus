@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract VersusLaunchpool is Pausable, Cappable, SaleRounds, StakeRequired, InvestorTyped {
+  string public name;
   address public depositToken;
   uint256 public depositsTotal;
   
@@ -17,16 +18,18 @@ contract VersusLaunchpool is Pausable, Cappable, SaleRounds, StakeRequired, Inve
 
   /***
    * @dev Constructor.
+   * @param _name Name.
    * @param _depositToken Token used for deposit.
    * @param _stakingPool Staking pool address to check stakes.
    * @param _maxCap Max cap amount.
    * @param _allocationInvestorBase Allocation amount for Base investors.
    * @param _allocationInvestorPro Allocation amount for Pro investors.
    */
-  constructor(address _depositToken, uint256 _maxCap, address _stakingPool, uint256 _allocationInvestorBase, uint256 _allocationInvestorPro)
+  constructor(string memory _name, address _depositToken, uint256 _maxCap, address _stakingPool, uint256 _allocationInvestorBase, uint256 _allocationInvestorPro)
     Cappable(_maxCap)
     StakeRequired(_stakingPool)
     InvestorTyped(_allocationInvestorBase, _allocationInvestorPro) {
+      name = _name;
       depositToken = _depositToken;
   }
 
