@@ -24,6 +24,7 @@
 5. approve VersusStakingAccess for VersusToken
 
 
+
 ## Deployment flow (LaunchpoolStaking)
 1. deploy LaunchpoolStaking(address _versusToken, uint256 _lockPeriod, uint256 _stakeRequired) Smart Contract
 ```_versusToken``` - VersusToken address
@@ -34,7 +35,8 @@
 
 
 ## Deployment flow (VersusLaunchpool)
-1. deploy VersusLaunchpool(address _depositToken, uint256 _maxCap, address _stakingPool, uint256 _allocationInvestorBase, uint256 _allocationInvestorPro) Smart Contract
+1. deploy VersusLaunchpool(string memory _name, address _depositToken, uint256 _maxCap, address _stakingPool, uint256 _allocationInvestorBase, uint256 _allocationInvestorPro) Smart Contract
+```_name_``` - Name
 ```_depositToken``` - Token used for deposit
 ```_maxCap``` - Max cap amount
 ```_stakingPool``` - Staking pool address to check stakes
